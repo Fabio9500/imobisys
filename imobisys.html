@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ImobiSys — Controle de Imóveis</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--sur:#161b22;--card:#1c2433;--bor:#30363d;--acc:#4ade80;--grn:#2ea043;--red:#da3633;--blu:#58a6ff;--orn:#f0a500;--pur:#bc8cff;--txt:#e6edf3;--mut:#8b949e;--r:8px}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--bor);border-radius:3px}
+input,select,textarea{background:var(--bg);color:var(--txt);border:1px solid var(--bor);border-radius:var(--r);padding:7px 10px;font-size:13px;outline:none;width:100%;transition:border-color .2s;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+input::placeholder{color:var(--mut)}
+input[type="date"],input[type="month"]{color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator,input[type="month"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:1;background-color:var(--acc);border-radius:4px;padding:3px}
+button{cursor:pointer;font-weight:700;border:none;border-radius:var(--r);transition:opacity .15s;font-family:inherit}
+button:hover{opacity:.85}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th{text-align:left;padding:7px 10px;color:var(--txt);font-weight:800;border-bottom:2px solid var(--acc);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+td{padding:7px 10px;border-bottom:1px solid #1e2530;vertical-align:middle}
+tr:hover td{background:#1e2a3a22}
+.card{background:var(--card);border:1px solid var(--bor);border-radius:var(--r);padding:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.05em;white-space:nowrap}
+.tag-am{background:#f0a50022;color:var(--orn);border:1px solid #f0a50055}
+.tag-vd{background:#2ea04322;color:#3fb950;border:1px solid #2ea04355}
+.tag-vm{background:#da363322;color:#f85149;border:1px solid #da363355}
+.tag-az{background:#58a6ff22;color:var(--blu);border:1px solid #58a6ff55}
+.tag-cz{background:#30363d33;color:var(--mut);border:1px solid var(--bor)}
+.tag-vx{background:#4ade8022;color:var(--acc);border:1px solid #4ade8055}
+.overlay{position:fixed;inset:0;background:#000a;z-index:999;display:none;align-items:center;justify-content:center;padding:12px}
+.overlay.vis{display:flex}
+.modal{background:var(--card);border:1px solid var(--bor);border-radius:12px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto}
+.modal-head{padding:13px 16px;border-bottom:1px solid var(--bor);display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;position:sticky;top:0;background:var(--card);z-index:2}
+.modal-body{padding:16px}
+.campo{margin-bottom:10px}
+.campo label{display:block;font-size:10px;color:var(--mut);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+#navbar{background:var(--sur);border-bottom:1px solid var(--bor);padding:0 16px;display:flex;align-items:center;gap:10px;height:50px;position:sticky;top:0;z-index:100}
+.logo{font-size:15px;font-weight:800;color:var(--acc);white-space:nowrap}
+.tabs{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:transparent;color:var(--mut);border:none;border-radius:6px;padding:5px 11px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer}
+.tab.ativo{background:var(--acc);color:#000}
+#main{padding:18px;max-width:1300px;margin:0 auto}
+.titulo{font-weight:800;font-size:17px;margin-bottom:14px}
+.titulo.acc{color:var(--acc)}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.kpi{flex:1 1 150px;min-width:140px}
+.kpi-l{font-size:10px;color:var(--mut);text-transform:uppercase;margin-bottom:5px;letter-spacing:.07em}
+.kpi-v{font-size:20px;font-weight:800}
+.kpi-s{font-size:11px;color:var(--mut);margin-top:2px}
+.alerta{border-radius:8px;padding:9px 14px;margin-bottom:8px;font-size:12px;line-height:1.5}
+.av{background:#da363322;border:1px solid var(--red);color:#f85149}
+.aa{background:#f0a50022;border:1px solid var(--orn);color:var(--orn)}
+.ai{background:#58a6ff22;border:1px solid var(--blu);color:var(--blu)}
+.ag{background:#4ade8022;border:1px solid var(--acc);color:var(--acc)}
+#status{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:20px;font-size:12px;font-weight:700;display:none;z-index:500;white-space:nowrap}
+#tela-loading{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.spin{width:40px;height:40px;border:3px solid var(--bor);border-top-color:var(--acc);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#tela-token{position:fixed;inset:0;background:var(--bg);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px}
+#fab-buttons{position:fixed;bottom:70px;right:16px;display:flex;flex-direction:column;gap:10px;z-index:300}
+.fab{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px #0006;transition:transform .15s,opacity .15s;font-family:inherit;position:relative}
+.fab:hover{transform:scale(1.1)}
+.fab-main{background:var(--acc);color:#000}
+.fab-wpp{background:#25d366;color:#fff}
+.fab-back{background:var(--sur);color:var(--txt);border:1px solid var(--bor)}
+.fab-tip{position:absolute;right:58px;background:#111;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;top:50%;transform:translateY(-50%)}
+.fab:hover .fab-tip{opacity:1}
+@media print{#navbar,.noprint,#status,#fab-buttons{display:none!important}#main{padding:0;max-width:none}}
+</style>
+</head>
+<body>
+
+<div id="tela-loading">
+  <div style="font-size:36px">🏠</div>
+  <div style="font-weight:800;font-size:22px;color:var(--acc)">ImobiSys</div>
+  <div class="spin"></div>
+  <div style="color:var(--mut);font-size:13px" id="load-msg">Carregando...</div>
+</div>
+
+<div id="tela-token">
+  <div class="card" style="max-width:480px;width:100%;padding:32px;text-align:center">
+    <div style="font-size:44px;margin-bottom:12px">🏠</div>
+    <div style="font-weight:800;font-size:22px;color:var(--acc);margin-bottom:8px">ImobiSys</div>
+    <p style="color:var(--mut);font-size:13px;margin-bottom:24px;line-height:1.7">Controle de Imóveis &amp; Aluguéis<br>Informe seu <strong style="color:var(--txt)">Token do GitHub</strong> para conectar.</p>
+    <div class="campo" style="text-align:left;margin-bottom:16px">
+      <label>Token do GitHub</label>
+      <input id="inp-token" type="password" placeholder="github_pat_..." onkeydown="if(event.key==='Enter')entrar()"/>
+    </div>
+    <button type="button" onclick="entrar()" style="background:var(--acc);color:#000;padding:11px 28px;font-size:14px;font-weight:800;border:none;border-radius:var(--r);cursor:pointer;width:100%;margin-bottom:10px">✅ Conectar e Entrar</button>
+    <div id="err-token" style="color:var(--red);font-size:12px;display:none">Token inválido ou sem conexão. Verifique e tente novamente.</div>
+  </div>
+</div>
+
+<div id="navbar" style="display:none">
+  <div class="logo">🏠 ImobiSys</div>
+  <div class="tabs" id="tabs"></div>
+  <button type="button" onclick="desconectar()" style="background:transparent;color:var(--mut);font-size:11px;padding:4px 8px;border:1px solid var(--bor);" title="Trocar token">⚙</button>
+</div>
+<div id="main" style="display:none"></div>
+<div id="status"></div>
+
+<div class="overlay" id="ov">
+  <div class="modal">
+    <div class="modal-head"><span id="m-titulo"></span>
+      <button type="button" onclick="FM()" style="background:var(--bor);color:var(--txt);padding:3px 9px;font-size:11px">✕</button>
+    </div>
+    <div class="modal-body" id="m-corpo"></div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-cf">
+  <div class="card" style="max-width:400px;width:100%;text-align:center;padding:24px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:20px;line-height:1.6" id="cf-msg"></div>
+    <div class="row" style="justify-content:center;gap:10px">
+      <button type="button" id="cf-sim" style="background:var(--red);color:#fff;padding:8px 20px">Confirmar</button>
+      <button type="button" onclick="FCF()" style="background:var(--sur);color:var(--txt);padding:8px 20px;border:1px solid var(--bor)">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="fab-buttons" style="display:none">
+  <div class="fab fab-main" onclick="acaoRapida()" id="fab-add"><span class="fab-tip">Adicionar</span>➕</div>
+  <div class="fab fab-wpp" onclick="abrirWppAtrasados()" id="fab-wpp" style="display:none"><span class="fab-tip">WhatsApp inadimplentes</span>💬</div>
+  <div class="fab fab-back" onclick="voltarPagina()" id="fab-back"><span class="fab-tip">Voltar</span>←</div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG GITHUB
+// ══════════════════════════════════════════
+const GH_USER='Fabio9500', GH_REPO='imobisys', GH_FILE='dados.json';
+const GH_API=`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}`;
+const AK='imobisys';
+function getToken(){ return localStorage.getItem(AK+'_token')||''; }
+function setToken(t){ localStorage.setItem(AK+'_token',t); }
+let _sha=null, _shaAtual=null, _intervaloSync=null;
+let DB={};
+
+// ══════════════════════════════════════════
+// OFFLINE / FILA
+// ══════════════════════════════════════════
+function getFila(){ try{return JSON.parse(localStorage.getItem(AK+'_fila')||'null');}catch(e){return null;} }
+function setFila(db){ try{localStorage.setItem(AK+'_fila',JSON.stringify(db));}catch(e){} }
+function limparFila(){ localStorage.removeItem(AK+'_fila'); }
+function getUltimoSha(){ return localStorage.getItem(AK+'_last_sha')||''; }
+function setUltimoSha(s){ if(s)localStorage.setItem(AK+'_last_sha',s); }
+let _sincronizando=false;
+function isOnline(){ return navigator.onLine; }
+
+async function ghCarregar(){
+  try{
+    setStatus('saving','🔄 Carregando...');
+    const r=await fetch(GH_API,{headers:{'Authorization':`token ${getToken()}`,'Accept':'application/vnd.github.v3+json'}});
+    if(r.status===401||r.status===403) return null;
+    if(r.status===404){ setStatus('ok','✅ Pronto'); return dbVazio(); }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    _sha=j.sha; setUltimoSha(j.sha); _shaAtual=j.sha;
+    let dados;
+    if(!j.content||j.content.trim()===''){
+      const r2=await fetch(j.download_url); if(!r2.ok) throw new Error('Download falhou'); dados=await r2.json();
+    } else { dados=JSON.parse(atob(j.content.replace(/\n/g,''))); }
+    try{localStorage.setItem(AK+'_bkp',JSON.stringify(dados));}catch(e){}
+    const fila=getFila();
+    if(fila){ setStatus('warn','📤 Sincronizando alterações offline...'); return await resolverFila(fila,dados,j.sha); }
+    setStatus('ok','✅ Dados carregados');
+    setTimeout(()=>esconderStatus(),3000);
+    return dados;
+  }catch(e){
+    const bkp=localStorage.getItem(AK+'_bkp');
+    if(bkp){ setStatus('warn','📴 Offline — usando dados locais'); return JSON.parse(bkp); }
+    setStatus('warn','⚠ Sem dados'); return dbVazio();
+  }
+}
+
+async function resolverFila(filaDb,dadosRemotos,shaRemoto){
+  const shaOld=getUltimoSha();
+  if(!shaOld||shaOld===shaRemoto){
+    limparFila(); await ghSalvar(filaDb);
+    setStatus('ok','✅ Alterações offline sincronizadas');
+    setTimeout(()=>esconderStatus(),4000);
+    return filaDb;
+  }
+  mostrarConflitoSync(filaDb,dadosRemotos); return dadosRemotos;
+}
+
+function mostrarConflitoSync(filaDb,dadosRemotos){
+  AM('⚠️ Conflito de Sincronização',`
+    <div class="alerta av" style="margin-bottom:14px;font-size:13px">Você tem alterações offline que ainda não foram salvas na nuvem.<br>Porém, outro dispositivo já salvou dados diferentes. Escolha como prosseguir:</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${B('☁️ Manter dados da nuvem (descarta alterações offline)','aplicarConflito(&quot;nuvem&quot;)','var(--blu)','#fff')}
+      ${B('💾 Usar minhas alterações offline (sobrescreve nuvem)','aplicarConflito(&quot;local&quot;)','var(--acc)','#000')}
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--mut)">Dica: em dúvida escolha "nuvem" e refaça as alterações manualmente.</div>
+  `);
+  window._cFilaDb=filaDb; window._cRemoto=dadosRemotos;
+}
+
+async function aplicarConflito(op){
+  FM();
+  if(op==='nuvem'){ limparFila(); DB=window._cRemoto; setStatus('ok','☁️ Dados da nuvem mantidos'); }
+  else { limparFila(); await ghSalvar(window._cFilaDb); DB=window._cFilaDb; setStatus('ok','✅ Alterações offline salvas'); }
+  delete window._cFilaDb; delete window._cRemoto;
+  renderAba(); setTimeout(()=>esconderStatus(),4000);
+}
+
+async function ghSalvar(db){
+  try{localStorage.setItem(AK+'_bkp',JSON.stringify(db));}catch(e){}
+  if(!isOnline()){ setFila(db); setStatus('warn','📴 Offline — alteração salva localmente'); setTimeout(()=>esconderStatus(),4000); return; }
+  setStatus('saving','⏳ Salvando...');
+  try{
+    const rG=await fetch(GH_API,{headers:{'Authorization':`token ${getToken()}`,'Accept':'application/vnd.github.v3+json'}});
+    if(rG.ok){ const jG=await rG.json(); _sha=jG.sha; _shaAtual=jG.sha; }
+    const cont=btoa(unescape(encodeURIComponent(JSON.stringify(db,null,2))));
+    const r=await fetch(GH_API,{method:'PUT',headers:{'Authorization':`token ${getToken()}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({message:'ImobiSys update',content:cont,sha:_sha})});
+    const res=await r.json();
+    if(res.content&&res.content.sha){ _sha=res.content.sha; _shaAtual=res.content.sha; setUltimoSha(res.content.sha); limparFila(); setStatus('ok','✅ Salvo'); }
+    else { setFila(db); setStatus('err','⚠ Erro ao salvar — guardado localmente'); }
+    setTimeout(()=>esconderStatus(),3000);
+  }catch(e){ setFila(db); setStatus('warn','📴 Sem conexão — salvo localmente'); setTimeout(()=>esconderStatus(),5000); }
+}
+
+window.addEventListener('online',async()=>{
+  const fila=getFila();
+  if(fila&&!_sincronizando){
+    _sincronizando=true;
+    try{
+      const r=await fetch(GH_API,{headers:{'Authorization':`token ${getToken()}`,'Accept':'application/vnd.github.v3+json'}});
+      if(r.ok){ const j=await r.json(); const dr=JSON.parse(atob(j.content.replace(/\n/g,''))); await resolverFila(fila,dr,j.sha); if(!window._cFilaDb)renderAba(); }
+    }catch(e){}
+    _sincronizando=false;
+  }
+});
+window.addEventListener('offline',()=>{ setStatus('warn','📴 Você está offline'); setTimeout(()=>esconderStatus(),4000); });
+
+function esconderStatus(){ document.getElementById('status').style.display='none'; }
+function setStatus(tipo,msg){
+  const el=document.getElementById('status');
+  const s={saving:'background:#f0a50022;color:var(--orn);border:1px solid #f0a50055',ok:'background:#2ea04322;color:#3fb950;border:1px solid #2ea04355',warn:'background:#f0a50022;color:var(--orn);border:1px solid #f0a50055',err:'background:#da363322;color:#f85149;border:1px solid #da363355'};
+  el.style.cssText='display:block;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:20px;font-size:12px;font-weight:700;z-index:500;white-space:nowrap;'+s[tipo];
+  el.textContent=msg;
+}
+
+function atualizarIndicador(){
+  let ind=document.getElementById('conn-ind');
+  if(!ind){ ind=document.createElement('div'); ind.id='conn-ind'; ind.style.cssText='position:fixed;top:55px;right:12px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:250;display:none'; document.body.appendChild(ind); }
+  const fila=getFila();
+  if(!isOnline()){ ind.style.cssText='position:fixed;top:55px;right:12px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:250;display:block;background:#da363322;color:#f85149;border:1px solid #da363355'; ind.textContent='📴 Offline'; }
+  else if(fila){ ind.style.cssText='position:fixed;top:55px;right:12px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:250;display:block;background:#f0a50022;color:var(--orn);border:1px solid #f0a50055'; ind.textContent='🔄 Pendente'; }
+  else { ind.style.display='none'; }
+}
+setInterval(atualizarIndicador,2000);
+
+// ══════════════════════════════════════════
+// SYNC AUTOMÁTICA 30s
+// ══════════════════════════════════════════
+async function verificarSyncRemota(){
+  if(!isOnline()||!getToken()) return;
+  try{
+    const r=await fetch(GH_API,{headers:{'Authorization':`token ${getToken()}`,'Accept':'application/vnd.github.v3+json'}});
+    if(!r.ok) return;
+    const j=await r.json();
+    if(_shaAtual&&j.sha!==_shaAtual){
+      _shaAtual=j.sha; _sha=j.sha; setUltimoSha(j.sha);
+      let dados; if(!j.content||j.content.trim()===''){ const r2=await fetch(j.download_url); dados=await r2.json(); } else { dados=JSON.parse(atob(j.content.replace(/\n/g,''))); }
+      DB=dados; try{localStorage.setItem(AK+'_bkp',JSON.stringify(dados));}catch(e){}
+      renderAba(); setStatus('ok','🔄 Atualizado de outro dispositivo'); setTimeout(()=>esconderStatus(),4000);
+    }
+  }catch(e){}
+}
+function iniciarSync(){ if(_intervaloSync)clearInterval(_intervaloSync); _intervaloSync=setInterval(verificarSyncRemota,30000); }
+
+// ══════════════════════════════════════════
+// BACKUP
+// ══════════════════════════════════════════
+async function backupGH(silencioso){
+  if(!getToken()||!isOnline()) return false;
+  try{
+    const ts=new Date().toISOString().slice(0,16).replace('T','_').replace(/:/g,'-');
+    const url=`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/backups/backup_${ts}.json`;
+    const cont=btoa(unescape(encodeURIComponent(JSON.stringify(DB,null,2))));
+    const r=await fetch(url,{method:'PUT',headers:{'Authorization':`token ${getToken()}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({message:`Backup ${ts}`,content:cont})});
+    if(r.ok){ try{localStorage.setItem(AK+'_ult_bkp',new Date().toLocaleString('pt-BR'));}catch(e){} if(!silencioso){setStatus('ok','☁️ Backup salvo no GitHub!');setTimeout(()=>esconderStatus(),4000);} return true; }
+  }catch(e){}
+  if(!silencioso){setStatus('err','⚠ Erro ao fazer backup');setTimeout(()=>esconderStatus(),4000);}
+  return false;
+}
+function backupLocal(){
+  const ts=new Date().toISOString().slice(0,16).replace('T','_').replace(/:/g,'-');
+  const nome=`ImobiSys_backup_${ts}.json`;
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome; a.click();
+  URL.revokeObjectURL(a.href);
+  try{localStorage.setItem(AK+'_ult_bkp',new Date().toLocaleString('pt-BR'));}catch(e){}
+  setStatus('ok',`💾 ${nome}`); setTimeout(()=>esconderStatus(),4000);
+}
+async function backupCompleto(){
+  setStatus('saving','⏳ Fazendo backup completo...');
+  const ghOk=await backupGH(true); backupLocal();
+  setStatus(ghOk?'ok':'warn',ghOk?'✅ Backup concluído — GitHub + local':'💾 Backup local (GitHub indisponível)');
+  setTimeout(()=>esconderStatus(),5000);
+}
+function importarBackup(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.imoveis||!d.inquilinos){alert('Arquivo inválido.');return;}
+      ACF('Importar backup substituirá todos os dados atuais. Confirmar?',async()=>{ DB=d; await ghSalvar(DB); renderAba(); setStatus('ok','✅ Backup importado'); });
+    }catch(e){alert('Erro ao ler arquivo: '+e.message);}
+  };
+  reader.readAsText(file);
+}
+function abrirModalBackup(){
+  let ult=''; try{ult=localStorage.getItem(AK+'_ult_bkp')||'';}catch(e){}
+  AM('💾 Backup dos Dados',`
+    <div style="font-size:12px;color:var(--mut);margin-bottom:14px">${ult?'Último backup: <strong style="color:var(--txt)">'+ult+'</strong>':'Nenhum backup registrado.'}</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${B('☁️ + 💾 Backup Completo (GitHub + local)','backupCompleto()','var(--acc)','#000')}
+      ${B('☁️ Somente GitHub','backupGH(false)','var(--blu)','#fff')}
+      ${B('💾 Somente arquivo local','backupLocal()','var(--sur)','var(--txt)')}
+      <div style="margin-top:6px;border-top:1px solid var(--bor);padding-top:12px">
+        <label style="font-size:11px;color:var(--mut);font-weight:700;text-transform:uppercase;display:block;margin-bottom:6px">Importar Backup</label>
+        <input type="file" accept=".json" onchange="importarBackup(this.files[0])" style="font-size:12px;padding:6px"/>
+      </div>
+    </div>
+  `);
+}
+setInterval(()=>{ if(isOnline()&&getToken())backupGH(true); },6*60*60*1000);
+window.addEventListener('beforeunload',()=>{ if(Object.keys(DB).length>0)try{localStorage.setItem(AK+'_bkp_fch',JSON.stringify(DB));}catch(e){} });
+
+// ══════════════════════════════════════════
+// DB
+// ══════════════════════════════════════════
+function dbVazio(){ return {versao:1,imoveis:[],inquilinos:[],contratos:[],pagamentos:[],despesas:[],contas:[]}; }
+function salvar(novo){ DB=novo; ghSalvar(DB); renderAba(); }
+
+// ══════════════════════════════════════════
+// UTILITÁRIOS
+// ══════════════════════════════════════════
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(n){ return 'R$ '+parseFloat(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtN(n){ return parseFloat(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtData(d){ if(!d) return '—'; const [a,m,dd]=d.split('-'); return `${dd}/${m}/${a}`; }
+function fmtMes(ref){ if(!ref) return '—'; const [a,m]=ref.split('-'); return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(m)-1]+'/'+a; }
+function hoje(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function mesAtual(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function diasAtraso(v){ if(!v) return 0; const d=new Date(v+'T00:00:00'); const h=new Date(); h.setHours(0,0,0,0); return Math.floor((h-d)/(86400000)); }
+function stPag(p){ if(p.status==='pago') return 'pago'; return diasAtraso(p.vencimento)>0?'atrasado':'pendente'; }
+function stDesp(d){ if(d.status==='pago') return 'pago'; return diasAtraso(d.vencimento)>0?'atrasado':'pendente'; }
+function corSt(s){ return {pago:'tag-vd',pendente:'tag-az',atrasado:'tag-vm',vago:'tag-am',alugado:'tag-vx',reforma:'tag-cz',ativo:'tag-vx',encerrado:'tag-cz',rescindido:'tag-vm'}[s]||'tag-cz'; }
+function lblSt(s){ return {pago:'✓ Pago',pendente:'⏳ Pendente',atrasado:'⚠ Atrasado',vago:'🔓 Vago',alugado:'✅ Alugado',reforma:'🔨 Reforma',ativo:'✅ Ativo',encerrado:'📁 Encerrado',rescindido:'❌ Rescindido'}[s]||s; }
+function nomeIm(id){ const i=DB.imoveis.find(x=>x.id===id); return i?i.nome:'?'; }
+function nomeIq(id){ const i=DB.inquilinos.find(x=>x.id===id); return i?i.nome:'?'; }
+function nomeCt(id){ const c=DB.contas.find(x=>x.id===id); return c?c.nome:''; }
+function ctAtivo(imovelId){ return DB.contratos.find(c=>c.imovelId===imovelId&&c.status==='ativo')||null; }
+function ctAtivoIq(iqId){ return DB.contratos.find(c=>c.inquilinoId===iqId&&c.status==='ativo')||null; }
+function B(lbl,oc,bg,cor,extra){ bg=bg||'var(--acc)'; cor=cor||'#000'; return `<button type="button" onclick="${oc}" style="background:${bg};color:${cor};padding:7px 14px;font-size:12px;border:none;border-radius:var(--r);cursor:pointer;font-weight:700;font-family:inherit;${extra||''}">${lbl}</button>`; }
+function AM(titulo,html){ document.getElementById('m-titulo').innerHTML=titulo; document.getElementById('m-corpo').innerHTML=html; document.getElementById('ov').classList.add('vis'); }
+function FM(){ document.getElementById('ov').classList.remove('vis'); }
+let _cfCb=null;
+function ACF(msg,cb,btxt){ document.getElementById('cf-msg').innerHTML=msg; document.getElementById('ov-cf').classList.add('vis'); _cfCb=cb; const b=document.getElementById('cf-sim'); b.textContent=btxt||'Confirmar'; const novo=b.cloneNode(true); b.parentNode.replaceChild(novo,b); novo.addEventListener('click',()=>{FCF();if(_cfCb)_cfCb();}); }
+function FCF(){ document.getElementById('ov-cf').classList.remove('vis'); _cfCb=null; }
+
+function calcAtrasados(){ return DB.pagamentos.filter(p=>p.status!=='pago'&&diasAtraso(p.vencimento)>0); }
+function calcDespAtrasadas(){ return DB.despesas.filter(d=>d.status!=='pago'&&diasAtraso(d.vencimento)>0); }
+function receitaMes(m){ const r=m||mesAtual(); const pp=DB.pagamentos.filter(p=>p.referencia===r); return {esp:pp.reduce((s,p)=>s+(p.valorPrevisto||0),0), rec:pp.filter(p=>p.status==='pago').reduce((s,p)=>s+(p.valorPago||p.valorPrevisto||0),0)}; }
+
+// ══════════════════════════════════════════
+// WHATSAPP
+// ══════════════════════════════════════════
+function abrirWpp(telefone,msg){ const t=telefone.replace(/\D/g,''); window.open(`https://wa.me/${t.startsWith('55')?t:'55'+t}?text=${encodeURIComponent(msg)}`,'_blank'); }
+
+function wppMsgAtraso(inq,im,pags){
+  const lista=pags.map(p=>`• Ref. ${fmtMes(p.referencia)} — Venc. ${fmtData(p.vencimento)} — ${fmt(p.valorPrevisto)} (${diasAtraso(p.vencimento)} dia(s))`).join('\n');
+  const total=pags.reduce((s,p)=>s+(p.valorPrevisto||0),0);
+  return `Olá ${inq.nome}! 😊\n\nPassando para informar sobre aluguel(is) em atraso do imóvel *${im.nome}*.\n\n${lista}\n\n*Total em aberto: ${fmt(total)}*\n\nPor favor, entre em contato para regularizarmos.\n\nAtenciosamente,\nFabio Santos`;
+}
+
+function abrirWppInquilino(iqId){
+  const inq=DB.inquilinos.find(x=>x.id===iqId);
+  if(!inq||!inq.whatsapp){alert('Inquilino sem WhatsApp cadastrado.');return;}
+  const ct=ctAtivoIq(iqId);
+  const im=ct?DB.imoveis.find(x=>x.id===ct.imovelId):null;
+  const pags=DB.pagamentos.filter(p=>p.inquilinoId===iqId&&p.status!=='pago'&&diasAtraso(p.vencimento)>0);
+  const msg=pags.length>0&&im?wppMsgAtraso(inq,im,pags):`Olá ${inq.nome}! 😊\n\nEntrando em contato referente ao aluguel.\n\nAtenciosamente,\nFabio Santos`;
+  abrirWpp(inq.whatsapp,msg);
+}
+
+function abrirWppPag(pagId){
+  const pag=DB.pagamentos.find(x=>x.id===pagId);
+  if(!pag) return;
+  const inq=DB.inquilinos.find(x=>x.id===pag.inquilinoId);
+  if(!inq||!inq.whatsapp){alert('Inquilino sem WhatsApp cadastrado.');return;}
+  const im=DB.imoveis.find(x=>x.id===pag.imovelId);
+  const da=diasAtraso(pag.vencimento);
+  const msg=`Olá ${inq.nome}! 😊\n\nReferente ao aluguel do imóvel *${im?im.nome:''}*:\n\n📅 Referência: ${fmtMes(pag.referencia)}\n📅 Vencimento: ${fmtData(pag.vencimento)}\n💰 Valor: ${fmt(pag.valorPrevisto)}${da>0?'\n⚠ '+da+' dia(s) em atraso':''}\n\nPor favor, entre em contato para regularizarmos.\n\nAtenciosamente,\nFabio Santos`;
+  abrirWpp(inq.whatsapp,msg);
+}
+
+function abrirWppAtrasados(){
+  const atr=calcAtrasados();
+  if(atr.length===0){setStatus('ok','✅ Nenhum aluguel em atraso!');setTimeout(()=>esconderStatus(),3000);return;}
+  const porIq={};
+  atr.forEach(p=>{if(!porIq[p.inquilinoId])porIq[p.inquilinoId]=[];porIq[p.inquilinoId].push(p);});
+  const lista=Object.entries(porIq);
+  let html=`<div style="font-size:13px;margin-bottom:14px">Há <strong>${atr.length}</strong> parcela(s) em atraso de <strong>${lista.length}</strong> inquilino(s):</div>`;
+  lista.forEach(([iqId,pags])=>{
+    const inq=DB.inquilinos.find(x=>x.id===iqId);
+    if(!inq) return;
+    const im=pags[0]?DB.imoveis.find(x=>x.id===pags[0].imovelId):null;
+    const total=pags.reduce((s,p)=>s+(p.valorPrevisto||0),0);
+    html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--bor);border-radius:8px;margin-bottom:8px">
+      <div style="flex:1"><div style="font-weight:700">${esc(inq.nome)}</div>
+      <div style="font-size:11px;color:var(--mut)">${im?esc(im.nome):''} — ${pags.length} parcela(s) — ${fmt(total)}</div>
+      <div style="font-size:11px;color:${inq.whatsapp?'var(--acc)':'var(--red)'}">📱 ${esc(inq.whatsapp||'Sem WhatsApp')}</div></div>
+      ${inq.whatsapp?B('💬 Enviar',`FM();abrirWppInquilino('${inq.id}')`, '#25d366','#fff'):''}
+    </div>`;
+  });
+  AM('💬 WhatsApp — Inadimplentes',html);
+}
+
+// ══════════════════════════════════════════
+// NAVEGAÇÃO
+// ══════════════════════════════════════════
+let ABA='db', _abaAnt='db';
+const ABAS=[{id:'db',r:'📊 Dashboard'},{id:'im',r:'🏠 Imóveis'},{id:'iq',r:'👥 Inquilinos'},{id:'ct',r:'📋 Contratos'},{id:'al',r:'💰 Aluguéis'},{id:'dp',r:'🧾 Despesas'},{id:'rl',r:'📈 Relatórios'},{id:'cad',r:'🏦 Cadastros'}];
+
+function irPara(id){ _abaAnt=ABA; ABA=id; initNav(); renderAba(); window.scrollTo(0,0); }
+function voltarPagina(){ irPara(_abaAnt); }
+
+function initNav(){
+  const atr=calcAtrasados().length;
+  document.getElementById('tabs').innerHTML=ABAS.map(a=>`<button type="button" class="tab${ABA===a.id?' ativo':''}" onclick="irPara('${a.id}')">${a.r}${a.id==='al'&&atr>0?`<span style="background:var(--red);color:#fff;border-radius:50%;padding:1px 5px;font-size:9px;margin-left:4px">${atr}</span>`:''}</button>`).join('')+
+    `<button type="button" onclick="abrirModalBackup()" style="background:var(--grn);color:#fff;border:none;border-radius:var(--r);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:6px">💾 Backup</button>`;
+  const fabWpp=document.getElementById('fab-wpp');
+  if(fabWpp) fabWpp.style.display=calcAtrasados().length>0?'flex':'none';
+  document.getElementById('fab-buttons').style.display='flex';
+}
+
+function acaoRapida(){ const m={im:()=>modalImovel(),iq:()=>modalInquilino(),ct:()=>modalContrato(),al:()=>modalPagamento(),dp:()=>modalDespesa(),cad:()=>modalConta()}; if(m[ABA])m[ABA](); }
+
+function renderAba(){
+  initNav();
+  const m={db:htmlDB,im:htmlIM,iq:htmlIQ,ct:htmlCT,al:htmlAL,dp:htmlDP,rl:htmlRL,cad:htmlCAD};
+  document.getElementById('main').innerHTML=(m[ABA]||htmlDB)();
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function htmlDB(){
+  const total=DB.imoveis.length, alugados=DB.imoveis.filter(i=>i.status==='alugado').length, vagos=DB.imoveis.filter(i=>i.status==='vago').length;
+  const {esp,rec}=receitaMes(); const atr=calcAtrasados(); const datr=calcDespAtrasadas();
+  const totalAtr=atr.reduce((s,p)=>s+(p.valorPrevisto||0),0);
+
+  // Alertas de aluguéis atrasados agrupados por inquilino
+  let alertas='';
+  if(atr.length>0){
+    const porIq={};
+    atr.forEach(p=>{if(!porIq[p.inquilinoId])porIq[p.inquilinoId]=[];porIq[p.inquilinoId].push(p);});
+    Object.entries(porIq).forEach(([iqId,pags])=>{
+      const inq=DB.inquilinos.find(x=>x.id===iqId); const im=DB.imoveis.find(x=>x.id===pags[0].imovelId);
+      const tot=pags.reduce((s,p)=>s+(p.valorPrevisto||0),0); const mx=Math.max(...pags.map(p=>diasAtraso(p.vencimento)));
+      alertas+=`<div class="alerta av" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="flex:1">⚠ <strong>${esc(inq?inq.nome:'?')}</strong>${im?' — '+esc(im.nome):''} — ${pags.length} parcela(s) — ${fmt(tot)} — ${mx} dia(s)</div>
+        ${inq&&inq.whatsapp?B('💬 WhatsApp',`abrirWppInquilino('${iqId}')`, '#25d366','#fff','padding:5px 10px;font-size:11px'):''}
+      </div>`;
+    });
+  }
+
+  // Despesas vencendo em até 7 dias
+  const h7=new Date(); h7.setDate(h7.getDate()+7);
+  DB.despesas.filter(d=>d.status!=='pago'&&diasAtraso(d.vencimento)<=0&&new Date(d.vencimento+'T00:00:00')<=h7).forEach(d=>{
+    const im=DB.imoveis.find(x=>x.id===d.imovelId); const da=diasAtraso(d.vencimento);
+    alertas+=`<div class="alerta aa">📅 Despesa vencendo: <strong>${esc(d.tipo.toUpperCase())}</strong> — ${im?esc(im.nome):''} — ${fmt(d.valor)} — Venc. ${fmtData(d.vencimento)}${da<0?' (em '+(da*-1)+' dias)':' (HOJE)'}</div>`;
+  });
+  if(datr.length>0) alertas+=`<div class="alerta av">⚠ ${datr.length} despesa(s) em atraso — total ${fmt(datr.reduce((s,d)=>s+(d.valor||0),0))}</div>`;
+
+  // Contratos vencendo em 60 dias
+  const h60=new Date(); h60.setDate(h60.getDate()+60); const h0=new Date(); h0.setHours(0,0,0,0);
+  DB.contratos.filter(c=>c.status==='ativo'&&c.dataFim).forEach(c=>{
+    const fim=new Date(c.dataFim+'T00:00:00');
+    if(fim>=h0&&fim<=h60){
+      const im=DB.imoveis.find(x=>x.id===c.imovelId); const inq=DB.inquilinos.find(x=>x.id===c.inquilinoId);
+      const dias=Math.ceil((fim-h0)/86400000);
+      alertas+=`<div class="alerta aa">📋 Contrato vencendo em <strong>${dias} dias</strong>: ${im?esc(im.nome):''} — ${inq?esc(inq.nome):''} — Fim: ${fmtData(c.dataFim)}</div>`;
+    }
+  });
+  if(!alertas) alertas='<div class="alerta ag">✅ Tudo em dia — nenhum alerta no momento!</div>';
+
+  const ultPags=[...DB.pagamentos].sort((a,b)=>(b.dataPagamento||b.vencimento)<(a.dataPagamento||a.vencimento)?-1:1).slice(0,6);
+
+  return `<div class="titulo acc">📊 Dashboard</div>
+  <div class="kpis">
+    <div class="card kpi"><div class="kpi-l">Total de Imóveis</div><div class="kpi-v">${total}</div><div class="kpi-s">${alugados} alugado${alugados!==1?'s':''}, ${vagos} vago${vagos!==1?'s':''}</div></div>
+    <div class="card kpi"><div class="kpi-l">Receita Esperada (mês)</div><div class="kpi-v" style="color:var(--acc)">${fmt(esp)}</div><div class="kpi-s">${fmtMes(mesAtual())}</div></div>
+    <div class="card kpi"><div class="kpi-l">Recebido no Mês</div><div class="kpi-v" style="color:#3fb950">${fmt(rec)}</div><div class="kpi-s">${fmt(esp-rec)} pendente</div></div>
+    <div class="card kpi"><div class="kpi-l">Total em Atraso</div><div class="kpi-v" style="color:${totalAtr>0?'#f85149':'var(--mut)'}">${fmt(totalAtr)}</div><div class="kpi-s">${atr.length} parcela(s)</div></div>
+    <div class="card kpi"><div class="kpi-l">Contratos Ativos</div><div class="kpi-v">${DB.contratos.filter(c=>c.status==='ativo').length}</div><div class="kpi-s">de ${DB.contratos.length} total</div></div>
+  </div>
+  <div style="margin-bottom:16px"><div style="font-weight:700;margin-bottom:10px">🔔 Alertas</div>${alertas}</div>
+  <div class="row" style="gap:16px;align-items:flex-start">
+    <div style="flex:1;min-width:260px"><div class="card">
+      <div style="font-weight:700;margin-bottom:12px;font-size:13px">🏠 Situação dos Imóveis</div>
+      ${DB.imoveis.length===0?'<div style="color:var(--mut);font-size:12px">Nenhum imóvel cadastrado.</div>':''}
+      ${DB.imoveis.map(im=>{const ct=ctAtivo(im.id);const inq=ct?DB.inquilinos.find(x=>x.id===ct.inquilinoId):null;return `<div style="padding:8px 0;border-bottom:1px solid var(--bor);display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-weight:700;font-size:12px">${esc(im.nome)}</div><div style="font-size:11px;color:var(--mut)">${inq?esc(inq.nome):'Sem inquilino'}${ct?' — '+fmt(ct.valorAluguel)+'/mês':''}</div></div><span class="tag ${corSt(im.status)}">${lblSt(im.status)}</span></div>`;}).join('')}
+    </div></div>
+    <div style="flex:1;min-width:260px"><div class="card">
+      <div style="font-weight:700;margin-bottom:12px;font-size:13px">💰 Últimos Lançamentos</div>
+      ${ultPags.length===0?'<div style="color:var(--mut);font-size:12px">Nenhum pagamento registrado.</div>':''}
+      ${ultPags.map(p=>{const im=DB.imoveis.find(x=>x.id===p.imovelId);const st=stPag(p);return `<div style="padding:8px 0;border-bottom:1px solid var(--bor);display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-weight:700;font-size:12px">${im?esc(im.nome):'?'} — ${fmtMes(p.referencia)}</div><div style="font-size:11px;color:var(--mut)">${fmt(p.valorPrevisto)} — Venc. ${fmtData(p.vencimento)}</div></div><span class="tag ${corSt(st)}">${lblSt(st)}</span></div>`;}).join('')}
+    </div></div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// IMÓVEIS
+// ══════════════════════════════════════════
+let _imF='todos';
+function htmlIM(){
+  const lst=_imF==='todos'?DB.imoveis:DB.imoveis.filter(i=>i.status===_imF);
+  return `<div class="row" style="margin-bottom:14px;align-items:center">${`<div class="titulo acc" style="margin:0;flex:1">🏠 Imóveis</div>`}${B('+ Novo Imóvel','modalImovel()','var(--acc)','#000')}</div>
+  <div class="row" style="margin-bottom:14px;gap:6px">
+    ${['todos','alugado','vago','reforma'].map(f=>`<button type="button" onclick="_imF='${f}';renderAba()" style="background:${_imF===f?'var(--acc)':'var(--sur)'};color:${_imF===f?'#000':'var(--mut)'};padding:5px 14px;font-size:11px;border:1px solid var(--bor);border-radius:var(--r);cursor:pointer;font-weight:700">${{todos:'Todos',alugado:'Alugados',vago:'Vagos',reforma:'Em Reforma'}[f]}</button>`).join('')}
+  </div>
+  ${lst.length===0?`<div class="card" style="text-align:center;padding:32px;color:var(--mut)">Nenhum imóvel encontrado.<br><br>${B('+ Adicionar Imóvel','modalImovel()','var(--acc)','#000')}</div>`:''}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
+    ${lst.map(im=>{
+      const ct=ctAtivo(im.id); const inq=ct?DB.inquilinos.find(x=>x.id===ct.inquilinoId):null;
+      const patr=ct?DB.pagamentos.filter(p=>p.contratoId===ct.id&&p.status!=='pago'&&diasAtraso(p.vencimento)>0):[];
+      return `<div class="card" style="border-left:3px solid ${im.status==='alugado'?'var(--acc)':im.status==='vago'?'var(--orn)':'var(--mut)'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div style="font-weight:700;font-size:14px">${esc(im.nome)}</div>
+          <span class="tag ${corSt(im.status)}">${lblSt(im.status)}</span>
+        </div>
+        <div style="font-size:11px;color:var(--mut);margin-bottom:4px">${esc(im.tipo||'')}${im.area?' · '+im.area+' m²':''}</div>
+        <div style="font-size:11px;color:var(--mut);margin-bottom:8px">${esc(im.endereco||'')}${im.bairro?', '+esc(im.bairro):''}</div>
+        ${inq?`<div style="padding:8px;background:var(--bg);border-radius:6px;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700">👤 ${esc(inq.nome)}</div>
+          <div style="font-size:11px;color:var(--mut)">${fmt(ct.valorAluguel)}/mês · dia ${ct.diaVencimento}</div>
+          ${patr.length>0?`<div style="font-size:11px;color:#f85149;margin-top:3px">⚠ ${patr.length} parcela(s) em atraso</div>`:''}
+        </div>`:''}
+        <div class="row" style="gap:6px">
+          ${B('✏️ Editar',`modalImovel('${im.id}')`, 'var(--sur)','var(--txt)','font-size:11px;padding:5px 10px')}
+          ${inq?B('💬',`abrirWppInquilino('${inq.id}')`, '#25d366','#fff','font-size:11px;padding:5px 10px'):''}
+          ${B('🗑',`remImovel('${im.id}')`, 'var(--bg)','var(--red)','font-size:11px;padding:5px 10px;border:1px solid var(--bor)')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function modalImovel(id){
+  const im=id?DB.imoveis.find(x=>x.id===id):null;
+  const v=(f,d='')=>im?esc(String(im[f]!==undefined?im[f]:d)):String(d);
+  const tipos=['Casa','Apartamento','Comercial','Galpão','Terreno','Sala','Outro'];
+  AM(`${im?'✏️ Editar':'➕ Novo'} Imóvel`,`
+    <div class="row"><div style="flex:2;min-width:200px" class="campo"><label>Nome / Identificação *</label><input id="im-nome" value="${v('nome')}" placeholder="Ex: Casa Rua das Flores"/></div><div style="flex:1;min-width:130px" class="campo"><label>Tipo</label><select id="im-tipo">${tipos.map(t=>`<option${v('tipo')===t?' selected':''}>${t}</option>`).join('')}</select></div></div>
+    <div class="campo"><label>Endereço</label><input id="im-end" value="${v('endereco')}" placeholder="Rua, número"/></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Bairro</label><input id="im-bairro" value="${v('bairro')}"/></div><div style="flex:1" class="campo"><label>Cidade</label><input id="im-cidade" value="${v('cidade','Itabuna')}"/></div><div style="flex:0 0 80px" class="campo"><label>UF</label><input id="im-uf" value="${v('uf','BA')}" maxlength="2"/></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>CEP</label><input id="im-cep" value="${v('cep')}" placeholder="45600-000"/></div><div style="flex:1" class="campo"><label>Área (m²)</label><input id="im-area" type="number" value="${v('area')}"/></div><div style="flex:1" class="campo"><label>Status</label><select id="im-st"><option value="vago"${v('status')==='vago'?' selected':''}>🔓 Vago</option><option value="alugado"${v('status')==='alugado'?' selected':''}>✅ Alugado</option><option value="reforma"${v('status')==='reforma'?' selected':''}>🔨 Reforma</option></select></div></div>
+    <div style="border-top:1px solid var(--bor);padding-top:10px;margin:4px 0 10px;font-size:11px;color:var(--mut);font-weight:700;text-transform:uppercase">IPTU</div>
+    <div class="row"><div style="flex:1" class="campo"><label>Inscrição IPTU</label><input id="im-iptu-i" value="${v('iptu_inscricao')}" placeholder="Número de inscrição"/></div><div style="flex:1" class="campo"><label>Valor Anual (R$)</label><input id="im-iptu-v" type="number" step="0.01" value="${v('iptu_valor_anual')}"/></div><div style="flex:0 0 130px" class="campo"><label>Mês Vencimento</label><select id="im-iptu-m">${Array.from({length:12},(_,i)=>i+1).map(m=>`<option value="${m}"${parseInt(v('iptu_venc_mes','3'))===m?' selected':''}>${String(m).padStart(2,'0')} — ${['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][m-1]}</option>`).join('')}</select></div></div>
+    <div class="campo"><label>Observações</label><textarea id="im-obs" rows="2">${v('obs')}</textarea></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('💾 Salvar',`salvImovel('${id||''}')`, 'var(--acc)','#000')}</div>
+  `);
+}
+function salvImovel(id){
+  if(!document.getElementById('im-nome').value.trim()){alert('Informe o nome.');return;}
+  const obj={nome:document.getElementById('im-nome').value.trim(),tipo:document.getElementById('im-tipo').value,endereco:document.getElementById('im-end').value.trim(),bairro:document.getElementById('im-bairro').value.trim(),cidade:document.getElementById('im-cidade').value.trim(),uf:document.getElementById('im-uf').value.trim(),cep:document.getElementById('im-cep').value.trim(),area:parseFloat(document.getElementById('im-area').value)||0,status:document.getElementById('im-st').value,iptu_inscricao:document.getElementById('im-iptu-i').value.trim(),iptu_valor_anual:parseFloat(document.getElementById('im-iptu-v').value)||0,iptu_venc_mes:parseInt(document.getElementById('im-iptu-m').value)||3,obs:document.getElementById('im-obs').value.trim()};
+  const novo=JSON.parse(JSON.stringify(DB));
+  if(id){const i=novo.imoveis.findIndex(x=>x.id===id);if(i>=0)novo.imoveis[i]={...novo.imoveis[i],...obj};}
+  else novo.imoveis.push({id:uid(),...obj});
+  FM(); salvar(novo);
+}
+function remImovel(id){
+  const im=DB.imoveis.find(x=>x.id===id); if(!im)return;
+  if(DB.contratos.some(c=>c.imovelId===id&&c.status==='ativo')){alert('Imóvel com contrato ativo. Encerre o contrato antes.');return;}
+  ACF(`Remover o imóvel <strong>${esc(im.nome)}</strong>?`,()=>{const n=JSON.parse(JSON.stringify(DB));n.imoveis=n.imoveis.filter(x=>x.id!==id);salvar(n);});
+}
+
+// ══════════════════════════════════════════
+// INQUILINOS
+// ══════════════════════════════════════════
+let _iqB='';
+function htmlIQ(){
+  const b=_iqB.toLowerCase();
+  const lst=b?DB.inquilinos.filter(i=>i.nome.toLowerCase().includes(b)||(i.cpf||'').includes(b)||(i.telefone||'').includes(b)||(i.whatsapp||'').includes(b)):DB.inquilinos;
+  return `<div class="row" style="margin-bottom:14px;align-items:center"><div class="titulo acc" style="margin:0;flex:1">👥 Inquilinos</div>${B('+ Novo Inquilino','modalInquilino()','var(--acc)','#000')}</div>
+  <div class="campo" style="max-width:360px;margin-bottom:14px"><input value="${esc(_iqB)}" placeholder="🔍 Buscar por nome, CPF ou telefone..." oninput="_iqB=this.value;renderAba()"/></div>
+  ${lst.length===0?`<div class="card" style="text-align:center;padding:32px;color:var(--mut)">Nenhum inquilino encontrado.</div>`:`<div class="card"><table><thead><tr><th>Nome</th><th>CPF</th><th>WhatsApp</th><th>Imóvel Atual</th><th>Status</th><th></th></tr></thead><tbody>${lst.map(iq=>{const ct=ctAtivoIq(iq.id);const im=ct?DB.imoveis.find(x=>x.id===ct.imovelId):null;return `<tr><td style="font-weight:700">${esc(iq.nome)}</td><td style="color:var(--mut)">${esc(iq.cpf||'—')}</td><td>${esc(iq.whatsapp||iq.telefone||'—')}</td><td>${im?esc(im.nome):'<span style="color:var(--mut)">—</span>'}</td><td><span class="tag ${ct?'tag-vx':'tag-cz'}">${ct?'✅ Ativo':'Inativo'}</span></td><td><div class="row" style="gap:4px;justify-content:flex-end">${B('✏️',`modalInquilino('${iq.id}')`, 'var(--sur)','var(--txt)','font-size:11px;padding:4px 8px')}${iq.whatsapp?B('💬',`abrirWppInquilino('${iq.id}')`, '#25d366','#fff','font-size:11px;padding:4px 8px'):''}${B('🗑',`remIq('${iq.id}')`, 'var(--bg)','var(--red)','font-size:11px;padding:4px 8px;border:1px solid var(--bor)')}</div></td></tr>`;}).join('')}</tbody></table></div>`}`;
+}
+function modalInquilino(id){
+  const iq=id?DB.inquilinos.find(x=>x.id===id):null;
+  const v=(f,d='')=>iq?esc(iq[f]||d):d;
+  AM(`${iq?'✏️ Editar':'➕ Novo'} Inquilino`,`
+    <div class="campo"><label>Nome Completo *</label><input id="iq-nome" value="${v('nome')}" placeholder="Nome do inquilino"/></div>
+    <div class="row"><div style="flex:1" class="campo"><label>CPF</label><input id="iq-cpf" value="${v('cpf')}" placeholder="000.000.000-00"/></div><div style="flex:1" class="campo"><label>RG</label><input id="iq-rg" value="${v('rg')}"/></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Telefone</label><input id="iq-tel" value="${v('telefone')}" placeholder="73 9 9999-0000"/></div><div style="flex:1" class="campo"><label>WhatsApp (com DDD) *</label><input id="iq-wpp" value="${v('whatsapp')}" placeholder="73 9 9999-0000"/></div></div>
+    <div class="campo"><label>E-mail</label><input id="iq-mail" type="email" value="${v('email')}"/></div>
+    <div class="campo"><label>Endereço Anterior</label><input id="iq-endant" value="${v('endereco_anterior')}"/></div>
+    <div class="campo"><label>Fiador (nome e contato)</label><input id="iq-fiador" value="${v('fiador')}" placeholder="Nome e telefone do fiador"/></div>
+    <div class="campo"><label>Observações</label><textarea id="iq-obs" rows="2">${v('obs')}</textarea></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('💾 Salvar',`salvIq('${id||''}')`, 'var(--acc)','#000')}</div>
+  `);
+}
+function salvIq(id){
+  if(!document.getElementById('iq-nome').value.trim()){alert('Informe o nome.');return;}
+  const obj={nome:document.getElementById('iq-nome').value.trim(),cpf:document.getElementById('iq-cpf').value.trim(),rg:document.getElementById('iq-rg').value.trim(),telefone:document.getElementById('iq-tel').value.trim(),whatsapp:document.getElementById('iq-wpp').value.trim(),email:document.getElementById('iq-mail').value.trim(),endereco_anterior:document.getElementById('iq-endant').value.trim(),fiador:document.getElementById('iq-fiador').value.trim(),obs:document.getElementById('iq-obs').value.trim()};
+  const novo=JSON.parse(JSON.stringify(DB));
+  if(id){const i=novo.inquilinos.findIndex(x=>x.id===id);if(i>=0)novo.inquilinos[i]={...novo.inquilinos[i],...obj};}
+  else novo.inquilinos.push({id:uid(),...obj});
+  FM(); salvar(novo);
+}
+function remIq(id){
+  const iq=DB.inquilinos.find(x=>x.id===id); if(!iq)return;
+  if(DB.contratos.some(c=>c.inquilinoId===id&&c.status==='ativo')){alert('Inquilino com contrato ativo. Encerre o contrato antes.');return;}
+  ACF(`Remover o inquilino <strong>${esc(iq.nome)}</strong>?`,()=>{const n=JSON.parse(JSON.stringify(DB));n.inquilinos=n.inquilinos.filter(x=>x.id!==id);salvar(n);});
+}
+
+// ══════════════════════════════════════════
+// CONTRATOS
+// ══════════════════════════════════════════
+let _ctF='ativo';
+function htmlCT(){
+  const lst=_ctF==='todos'?DB.contratos:DB.contratos.filter(c=>c.status===_ctF);
+  const sorted=[...lst].sort((a,b)=>b.dataInicio>a.dataInicio?1:-1);
+  return `<div class="row" style="margin-bottom:14px;align-items:center"><div class="titulo acc" style="margin:0;flex:1">📋 Contratos</div>${B('+ Novo Contrato','modalContrato()','var(--acc)','#000')}</div>
+  <div class="row" style="margin-bottom:14px;gap:6px">
+    ${['ativo','encerrado','rescindido','todos'].map(f=>`<button type="button" onclick="_ctF='${f}';renderAba()" style="background:${_ctF===f?'var(--acc)':'var(--sur)'};color:${_ctF===f?'#000':'var(--mut)'};padding:5px 14px;font-size:11px;border:1px solid var(--bor);border-radius:var(--r);cursor:pointer;font-weight:700">${{ativo:'Ativos',encerrado:'Encerrados',rescindido:'Rescindidos',todos:'Todos'}[f]}</button>`).join('')}
+  </div>
+  ${sorted.length===0?`<div class="card" style="text-align:center;padding:32px;color:var(--mut)">Nenhum contrato encontrado.</div>`:''}
+  ${sorted.map(ct=>{
+    const im=DB.imoveis.find(x=>x.id===ct.imovelId); const iq=DB.inquilinos.find(x=>x.id===ct.inquilinoId);
+    const conta=DB.contas.find(x=>x.id===ct.contaId);
+    const patr=DB.pagamentos.filter(p=>p.contratoId===ct.id&&p.status!=='pago'&&diasAtraso(p.vencimento)>0);
+    return `<div class="card" style="margin-bottom:12px;border-left:3px solid ${ct.status==='ativo'?'var(--acc)':ct.status==='rescindido'?'var(--red)':'var(--bor)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <div><div style="font-weight:700;font-size:14px">${im?esc(im.nome):'?'}</div><div style="font-size:12px;color:var(--mut)">👤 ${iq?esc(iq.nome):'?'}</div></div>
+        <span class="tag ${corSt(ct.status)}">${lblSt(ct.status)}</span>
+      </div>
+      <div class="row" style="font-size:12px;gap:16px;flex-wrap:wrap">
+        <div>💰 <strong>${fmt(ct.valorAluguel)}/mês</strong></div>
+        <div>📅 Venc. dia <strong>${ct.diaVencimento}</strong></div>
+        <div>🗓 Início: ${fmtData(ct.dataInicio)}</div>
+        ${ct.dataFim?`<div>🗓 Fim: ${fmtData(ct.dataFim)}</div>`:''}
+        ${conta?`<div>🏦 ${esc(conta.nome)}</div>`:''}
+        ${ct.caucao?`<div>🔒 Caução: ${fmt(ct.caucao)}</div>`:''}
+      </div>
+      ${patr.length>0?`<div class="alerta av" style="margin-top:10px;font-size:12px">⚠ ${patr.length} parcela(s) em atraso</div>`:''}
+      <div class="row" style="margin-top:10px;gap:6px;flex-wrap:wrap">
+        ${B('✏️ Editar',`modalContrato('${ct.id}')`, 'var(--sur)','var(--txt)','font-size:11px;padding:5px 10px')}
+        ${ct.status==='ativo'?B('📅 Gerar Cobranças',`gerarCobrancas('${ct.id}')`, 'var(--blu)','#fff','font-size:11px;padding:5px 10px'):''}
+        ${ct.status==='ativo'?B('✅ Encerrar',`encerrarCt('${ct.id}')`, 'var(--bg)','var(--orn)','font-size:11px;padding:5px 10px;border:1px solid var(--bor)'):''}
+        ${B('💰 Pagamentos',`verPagsCt('${ct.id}')`, 'var(--bg)','var(--acc)','font-size:11px;padding:5px 10px;border:1px solid var(--bor)')}
+        ${B('🗑',`remCt('${ct.id}')`, 'var(--bg)','var(--red)','font-size:11px;padding:5px 10px;border:1px solid var(--bor)')}
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+function modalContrato(id){
+  const ct=id?DB.contratos.find(x=>x.id===id):null;
+  const v=(f,d='')=>ct?esc(String(ct[f]!==undefined?ct[f]:d)):String(d);
+  AM(`${ct?'✏️ Editar':'➕ Novo'} Contrato`,`
+    <div class="row"><div style="flex:1" class="campo"><label>Imóvel *</label><select id="ct-im"><option value="">Selecione...</option>${DB.imoveis.map(i=>`<option value="${i.id}"${v('imovelId')===i.id?' selected':''}>${esc(i.nome)}</option>`).join('')}</select></div><div style="flex:1" class="campo"><label>Inquilino *</label><select id="ct-iq"><option value="">Selecione...</option>${DB.inquilinos.map(i=>`<option value="${i.id}"${v('inquilinoId')===i.id?' selected':''}>${esc(i.nome)}</option>`).join('')}</select></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Valor Aluguel (R$) *</label><input id="ct-val" type="number" step="0.01" value="${v('valorAluguel')}"/></div><div style="flex:0 0 130px" class="campo"><label>Dia Vencimento *</label><input id="ct-dia" type="number" min="1" max="31" value="${v('diaVencimento','5')}"/></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Início</label><input id="ct-ini" type="date" value="${v('dataInicio')}"/></div><div style="flex:1" class="campo"><label>Fim (opcional)</label><input id="ct-fim" type="date" value="${v('dataFim')}"/></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Conta (recebimento)</label><select id="ct-cta"><option value="">Selecione...</option>${DB.contas.map(c=>`<option value="${c.id}"${v('contaId')===c.id?' selected':''}>${esc(c.nome)}</option>`).join('')}</select></div><div style="flex:1" class="campo"><label>Índice Reajuste</label><select id="ct-raj"><option value="IGPM"${v('reajuste')==='IGPM'?' selected':''}>IGP-M</option><option value="IPCA"${v('reajuste')==='IPCA'?' selected':''}>IPCA</option><option value="INPC"${v('reajuste')==='INPC'?' selected':''}>INPC</option><option value="fixo"${v('reajuste')==='fixo'?' selected':''}>Fixo</option><option value="sem"${v('reajuste')==='sem'?' selected':''}>Sem reajuste</option></select></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Depósito Caução (R$)</label><input id="ct-cau" type="number" step="0.01" value="${v('caucao','0')}"/></div><div style="flex:1" class="campo"><label>Status</label><select id="ct-st"><option value="ativo"${v('status')==='ativo'?' selected':''}>✅ Ativo</option><option value="encerrado"${v('status')==='encerrado'?' selected':''}>📁 Encerrado</option><option value="rescindido"${v('status')==='rescindido'?' selected':''}>❌ Rescindido</option></select></div></div>
+    <div class="campo"><label>Observações / Cláusulas especiais</label><textarea id="ct-obs" rows="2">${v('obs')}</textarea></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('💾 Salvar',`salvCt('${id||''}')`, 'var(--acc)','#000')}</div>
+  `);
+}
+function salvCt(id){
+  const imId=document.getElementById('ct-im').value, iqId=document.getElementById('ct-iq').value, val=parseFloat(document.getElementById('ct-val').value)||0;
+  if(!imId||!iqId||!val){alert('Preencha: Imóvel, Inquilino e Valor.');return;}
+  const status=document.getElementById('ct-st').value;
+  const obj={imovelId:imId,inquilinoId:iqId,valorAluguel:val,diaVencimento:parseInt(document.getElementById('ct-dia').value)||5,dataInicio:document.getElementById('ct-ini').value||hoje(),dataFim:document.getElementById('ct-fim').value||'',contaId:document.getElementById('ct-cta').value,reajuste:document.getElementById('ct-raj').value,caucao:parseFloat(document.getElementById('ct-cau').value)||0,status,obs:document.getElementById('ct-obs').value.trim()};
+  const novo=JSON.parse(JSON.stringify(DB));
+  if(id){const i=novo.contratos.findIndex(x=>x.id===id);if(i>=0)novo.contratos[i]={...novo.contratos[i],...obj};}
+  else novo.contratos.push({id:uid(),...obj});
+  // Atualiza status do imóvel
+  const ii=novo.imoveis.findIndex(x=>x.id===imId); if(ii>=0&&status==='ativo')novo.imoveis[ii].status='alugado';
+  FM(); salvar(novo);
+}
+function encerrarCt(id){
+  const ct=DB.contratos.find(x=>x.id===id); if(!ct)return;
+  const im=DB.imoveis.find(x=>x.id===ct.imovelId);
+  ACF(`Encerrar contrato do imóvel <strong>${im?esc(im.nome):''}</strong>?<br>O imóvel ficará como <em>Vago</em>.`,()=>{
+    const n=JSON.parse(JSON.stringify(DB));
+    const i=n.contratos.findIndex(x=>x.id===id); if(i>=0)n.contratos[i].status='encerrado';
+    const ii=n.imoveis.findIndex(x=>x.id===ct.imovelId); if(ii>=0)n.imoveis[ii].status='vago';
+    salvar(n);
+  },'Encerrar Contrato');
+}
+function remCt(id){
+  if(DB.pagamentos.some(p=>p.contratoId===id)){alert('Contrato com pagamentos. Encerre ao invés de excluir.');return;}
+  ACF('Remover este contrato?',()=>{const n=JSON.parse(JSON.stringify(DB));n.contratos=n.contratos.filter(x=>x.id!==id);salvar(n);});
+}
+function gerarCobrancas(ctId){
+  const ct=DB.contratos.find(x=>x.id===ctId); if(!ct)return;
+  const im=DB.imoveis.find(x=>x.id===ct.imovelId);
+  AM('📅 Gerar Cobranças',`
+    <div style="font-size:13px;margin-bottom:14px">Imóvel: <strong>${im?esc(im.nome):''}</strong> — ${fmt(ct.valorAluguel)}/mês</div>
+    <div class="row"><div style="flex:1" class="campo"><label>Mês de Referência</label><input id="gc-mes" type="month" value="${mesAtual()}"/></div><div style="flex:1" class="campo"><label>Quantos meses gerar</label><input id="gc-qtd" type="number" min="1" max="24" value="1"/></div></div>
+    <div class="campo"><label>Valor (deixe em branco para usar valor do contrato)</label><input id="gc-val" type="number" step="0.01" placeholder="${fmtN(ct.valorAluguel)}"/></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('📅 Gerar',`execGerarCobrancas('${ctId}')`, 'var(--acc)','#000')}</div>
+  `);
+}
+function execGerarCobrancas(ctId){
+  const ct=DB.contratos.find(x=>x.id===ctId); if(!ct)return;
+  const mesBase=document.getElementById('gc-mes').value;
+  const qtd=parseInt(document.getElementById('gc-qtd').value)||1;
+  const valCust=parseFloat(document.getElementById('gc-val').value)||0;
+  const val=valCust||ct.valorAluguel;
+  const novo=JSON.parse(JSON.stringify(DB));
+  let gerados=0, ignorados=0;
+  for(let i=0;i<qtd;i++){
+    const [a,m]=mesBase.split('-').map(Number);
+    const d=new Date(a,m-1+i,1);
+    const ref=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if(novo.pagamentos.some(p=>p.contratoId===ctId&&p.referencia===ref)){ignorados++;continue;}
+    const dia=String(ct.diaVencimento).padStart(2,'0');
+    const venc=`${ref}-${dia}`;
+    novo.pagamentos.push({id:uid(),contratoId:ctId,imovelId:ct.imovelId,inquilinoId:ct.inquilinoId,referencia:ref,vencimento:venc,valorPrevisto:val,valorPago:0,dataPagamento:'',contaId:ct.contaId,status:'pendente',obs:''});
+    gerados++;
+  }
+  FM(); salvar(novo);
+  setStatus('ok',`✅ ${gerados} cobrança(s) gerada(s)${ignorados>0?`, ${ignorados} já existia(m)`:''}`);
+  setTimeout(()=>esconderStatus(),4000);
+}
+function verPagsCt(ctId){
+  const pags=DB.pagamentos.filter(p=>p.contratoId===ctId).sort((a,b)=>a.referencia>b.referencia?1:-1);
+  const ct=DB.contratos.find(x=>x.id===ctId); const im=DB.imoveis.find(x=>x.id===ct?.imovelId);
+  AM(`💰 Pagamentos — ${im?esc(im.nome):''}`,`<table><thead><tr><th>Referência</th><th>Vencimento</th><th>Valor</th><th>Pago em</th><th>Vlr Pago</th><th>Status</th></tr></thead><tbody>${pags.length===0?'<tr><td colspan="6" style="text-align:center;color:var(--mut)">Nenhum pagamento.</td></tr>':''}${pags.map(p=>{const st=stPag(p);return `<tr><td>${fmtMes(p.referencia)}</td><td>${fmtData(p.vencimento)}</td><td>${fmt(p.valorPrevisto)}</td><td>${p.dataPagamento?fmtData(p.dataPagamento):'—'}</td><td>${p.valorPago?fmt(p.valorPago):'—'}</td><td><span class="tag ${corSt(st)}">${lblSt(st)}</span></td></tr>`;}).join('')}</tbody></table>`);
+}
+
+// ══════════════════════════════════════════
+// ALUGUÉIS
+// ══════════════════════════════════════════
+let _alMes=mesAtual(), _alStF='todos', _alImF='';
+function htmlAL(){
+  let lst=[...DB.pagamentos];
+  if(_alMes) lst=lst.filter(p=>p.referencia===_alMes);
+  if(_alStF!=='todos') lst=lst.filter(p=>stPag(p)===_alStF);
+  if(_alImF) lst=lst.filter(p=>p.imovelId===_alImF);
+  lst.sort((a,b)=>a.vencimento>b.vencimento?1:-1);
+  const totPrev=lst.reduce((s,p)=>s+(p.valorPrevisto||0),0);
+  const totRec=lst.filter(p=>p.status==='pago').reduce((s,p)=>s+(p.valorPago||p.valorPrevisto||0),0);
+  const totAtr=lst.filter(p=>stPag(p)==='atrasado').reduce((s,p)=>s+(p.valorPrevisto||0),0);
+  return `<div class="row" style="margin-bottom:14px;align-items:center;flex-wrap:wrap;gap:8px">
+    <div class="titulo acc" style="margin:0;flex:1">💰 Aluguéis</div>
+    ${B('+ Lançar','modalPagamento()','var(--acc)','#000')}
+    ${B('📅 Gerar Mês','modalGerarMes()','var(--blu)','#fff')}
+  </div>
+  <div class="card" style="margin-bottom:14px;padding:12px">
+    <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:0 0 165px" class="campo" style="margin:0"><label>Mês/Ano</label><input type="month" value="${_alMes}" onchange="_alMes=this.value;renderAba()"/></div>
+      <div style="flex:1;min-width:140px" class="campo" style="margin:0"><label>Imóvel</label><select onchange="_alImF=this.value;renderAba()"><option value="">Todos os imóveis</option>${DB.imoveis.map(i=>`<option value="${i.id}"${_alImF===i.id?' selected':''}>${esc(i.nome)}</option>`).join('')}</select></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        ${['todos','pago','pendente','atrasado'].map(s=>`<button type="button" onclick="_alStF='${s}';renderAba()" style="background:${_alStF===s?'var(--acc)':'var(--sur)'};color:${_alStF===s?'#000':'var(--mut)'};padding:5px 10px;font-size:11px;border:1px solid var(--bor);border-radius:var(--r);cursor:pointer;font-weight:700">${{todos:'Todos',pago:'✓ Pagos',pendente:'⏳ Pendentes',atrasado:'⚠ Atrasados'}[s]}</button>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="kpis" style="margin-bottom:14px">
+    <div class="card kpi"><div class="kpi-l">Esperado</div><div class="kpi-v">${fmt(totPrev)}</div></div>
+    <div class="card kpi"><div class="kpi-l">Recebido</div><div class="kpi-v" style="color:#3fb950">${fmt(totRec)}</div></div>
+    <div class="card kpi"><div class="kpi-l">Em Atraso</div><div class="kpi-v" style="color:${totAtr>0?'#f85149':'var(--mut)'}">${fmt(totAtr)}</div></div>
+    <div class="card kpi"><div class="kpi-l">Lançamentos</div><div class="kpi-v">${lst.length}</div></div>
+  </div>
+  ${lst.length===0?`<div class="card" style="text-align:center;padding:32px;color:var(--mut)">Nenhum pagamento encontrado.<br><small style="margin-top:8px;display:block">Use "📅 Gerar Mês" para criar cobranças dos contratos ativos automaticamente.</small></div>`:`<div class="card"><table><thead><tr><th>Imóvel</th><th>Inquilino</th><th>Ref.</th><th>Vencimento</th><th>Valor</th><th>Pago em</th><th>Conta</th><th>Status</th><th></th></tr></thead><tbody>${lst.map(p=>{const im=DB.imoveis.find(x=>x.id===p.imovelId);const iq=DB.inquilinos.find(x=>x.id===p.inquilinoId);const cta=DB.contas.find(x=>x.id===p.contaId);const st=stPag(p);const da=diasAtraso(p.vencimento);return `<tr><td style="font-weight:700">${im?esc(im.nome):'?'}</td><td>${iq?esc(iq.nome):'?'}</td><td>${fmtMes(p.referencia)}</td><td>${fmtData(p.vencimento)}${da>0&&st!=='pago'?`<br><span style="color:#f85149;font-size:10px">${da}d</span>`:''}</td><td>${fmt(p.valorPrevisto)}</td><td>${p.dataPagamento?fmtData(p.dataPagamento)+(p.valorPago&&p.valorPago!==p.valorPrevisto?'<br><span style="font-size:10px;color:var(--mut)">'+fmt(p.valorPago)+'</span>':''):'—'}</td><td style="font-size:11px;color:var(--mut)">${cta?esc(cta.nome):'—'}</td><td><span class="tag ${corSt(st)}">${lblSt(st)}</span></td><td><div class="row" style="gap:3px;justify-content:flex-end">${st!=='pago'?B('✓',`modalPagar('${p.id}')`, 'var(--grn)','#fff','font-size:10px;padding:3px 7px'):''}${st==='atrasado'&&iq&&iq.whatsapp?B('💬',`abrirWppPag('${p.id}')`, '#25d366','#fff','font-size:10px;padding:3px 7px'):''}${B('✏️',`modalEditarPag('${p.id}')`, 'var(--sur)','var(--txt)','font-size:10px;padding:3px 7px')}${B('🗑',`remPag('${p.id}')`, 'var(--bg)','var(--red)','font-size:10px;padding:3px 7px;border:1px solid var(--bor)')}</div></td></tr>`;}).join('')}</tbody></table></div>`}`;
+}
+function modalPagar(id){
+  const p=DB.pagamentos.find(x=>x.id===id); if(!p)return;
+  const im=DB.imoveis.find(x=>x.id===p.imovelId);
+  AM('✅ Registrar Pagamento',`
+    <div style="font-size:13px;margin-bottom:14px"><strong>${im?esc(im.nome):''}</strong> — Ref. ${fmtMes(p.referencia)} — Previsto: ${fmt(p.valorPrevisto)}</div>
+    <div class="row"><div style="flex:1" class="campo"><label>Data do Pagamento</label><input id="rp-data" type="date" value="${hoje()}"/></div><div style="flex:1" class="campo"><label>Valor Recebido (R$)</label><input id="rp-val" type="number" step="0.01" value="${fmtN(p.valorPrevisto)}"/></div></div>
+    <div class="campo"><label>Conta Bancária (recebimento)</label><select id="rp-cta"><option value="">Selecione...</option>${DB.contas.map(c=>`<option value="${c.id}"${p.contaId===c.id?' selected':''}>${esc(c.nome)}</option>`).join('')}</select></div>
+    <div class="campo"><label>Observação</label><input id="rp-obs" value="${esc(p.obs||'')}" placeholder="Anotação opcional"/></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('✅ Confirmar Recebimento',`salvPagar('${id}')`, 'var(--acc)','#000')}</div>
+  `);
+}
+function salvPagar(id){
+  const dt=document.getElementById('rp-data').value; if(!dt){alert('Informe a data.');return;}
+  const n=JSON.parse(JSON.stringify(DB));
+  const i=n.pagamentos.findIndex(x=>x.id===id);
+  if(i>=0)n.pagamentos[i]={...n.pagamentos[i],dataPagamento:dt,valorPago:parseFloat(document.getElementById('rp-val').value)||0,contaId:document.getElementById('rp-cta').value,status:'pago',obs:document.getElementById('rp-obs').value};
+  FM(); salvar(n);
+}
+function modalEditarPag(id){
+  const p=DB.pagamentos.find(x=>x.id===id); if(!p)return;
+  AM('✏️ Editar Lançamento',`
+    <div class="row"><div style="flex:1" class="campo"><label>Referência</label><input id="ep-ref" type="month" value="${p.referencia}"/></div><div style="flex:1" class="campo"><label>Vencimento</label><input id="ep-venc" type="date" value="${p.vencimento}"/></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Valor Previsto</label><input id="ep-prev" type="number" step="0.01" value="${p.valorPrevisto}"/></div><div style="flex:1" class="campo"><label>Conta</label><select id="ep-cta"><option value="">Sem conta</option>${DB.contas.map(c=>`<option value="${c.id}"${p.contaId===c.id?' selected':''}>${esc(c.nome)}</option>`).join('')}</select></div></div>
+    <div class="campo"><label>Status</label><select id="ep-st" onchange="document.getElementById('ep-pag-ext').style.display=this.value==='pago'?'block':'none'"><option value="pendente"${p.status==='pendente'?' selected':''}>⏳ Pendente</option><option value="pago"${p.status==='pago'?' selected':''}>✓ Pago</option></select></div>
+    <div id="ep-pag-ext" style="${p.status==='pago'?'':'display:none'}"><div class="row"><div style="flex:1" class="campo"><label>Data Pagamento</label><input id="ep-dtpag" type="date" value="${p.dataPagamento||hoje()}"/></div><div style="flex:1" class="campo"><label>Valor Pago</label><input id="ep-valp" type="number" step="0.01" value="${p.valorPago||p.valorPrevisto}"/></div></div></div>
+    <div class="campo"><label>Obs.</label><input id="ep-obs" value="${esc(p.obs||'')}"/></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('💾 Salvar',`salvEditarPag('${id}')`, 'var(--acc)','#000')}</div>
+  `);
+}
+function salvEditarPag(id){
+  const n=JSON.parse(JSON.stringify(DB)); const i=n.pagamentos.findIndex(x=>x.id===id); if(i<0)return;
+  const st=document.getElementById('ep-st').value;
+  const dtEl=document.getElementById('ep-dtpag'); const vpEl=document.getElementById('ep-valp');
+  n.pagamentos[i]={...n.pagamentos[i],referencia:document.getElementById('ep-ref').value,vencimento:document.getElementById('ep-venc').value,valorPrevisto:parseFloat(document.getElementById('ep-prev').value)||0,contaId:document.getElementById('ep-cta').value,status:st,dataPagamento:st==='pago'?(dtEl?dtEl.value||hoje():hoje()):'',valorPago:st==='pago'?(vpEl?parseFloat(vpEl.value)||0:0):0,obs:document.getElementById('ep-obs').value};
+  FM(); salvar(n);
+}
+function remPag(id){ ACF('Remover este lançamento?',()=>{const n=JSON.parse(JSON.stringify(DB));n.pagamentos=n.pagamentos.filter(x=>x.id!==id);salvar(n);}); }
+function modalPagamento(){
+  const cts=DB.contratos.filter(c=>c.status==='ativo');
+  AM('➕ Lançar Pagamento',`
+    <div class="campo"><label>Contrato</label><select id="np-ct" onchange="preencherPag()"><option value="">Selecione o contrato...</option>${cts.map(c=>{const im=DB.imoveis.find(x=>x.id===c.imovelId);const iq=DB.inquilinos.find(x=>x.id===c.inquilinoId);return `<option value="${c.id}">${im?esc(im.nome):''} — ${iq?esc(iq.nome):''}</option>`;}).join('')}</select></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Referência</label><input id="np-ref" type="month" value="${mesAtual()}"/></div><div style="flex:1" class="campo"><label>Vencimento</label><input id="np-venc" type="date" value="${hoje()}"/></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Valor (R$)</label><input id="np-val" type="number" step="0.01" value="0"/></div><div style="flex:1" class="campo"><label>Conta</label><select id="np-cta"><option value="">Selecione...</option>${DB.contas.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('')}</select></div></div>
+    <div class="campo"><label>Obs.</label><input id="np-obs" placeholder="Anotação opcional"/></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('💾 Lançar',`salvNovoPag()`, 'var(--acc)','#000')}</div>
+  `);
+}
+function preencherPag(){
+  const ctId=document.getElementById('np-ct').value; if(!ctId)return;
+  const ct=DB.contratos.find(x=>x.id===ctId); if(!ct)return;
+  const [a,m]=mesAtual().split('-'); document.getElementById('np-venc').value=`${a}-${m}-${String(ct.diaVencimento).padStart(2,'0')}`;
+  document.getElementById('np-val').value=ct.valorAluguel;
+  if(ct.contaId)document.getElementById('np-cta').value=ct.contaId;
+}
+function salvNovoPag(){
+  const ctId=document.getElementById('np-ct').value, ref=document.getElementById('np-ref').value, val=parseFloat(document.getElementById('np-val').value)||0;
+  if(!ctId||!ref||!val){alert('Preencha: Contrato, Referência e Valor.');return;}
+  const ct=DB.contratos.find(x=>x.id===ctId);
+  if(DB.pagamentos.some(p=>p.contratoId===ctId&&p.referencia===ref)&&!confirm(`Já existe um lançamento para ${fmtMes(ref)}. Continuar?`))return;
+  const n=JSON.parse(JSON.stringify(DB));
+  n.pagamentos.push({id:uid(),contratoId:ctId,imovelId:ct.imovelId,inquilinoId:ct.inquilinoId,referencia:ref,vencimento:document.getElementById('np-venc').value,valorPrevisto:val,valorPago:0,dataPagamento:'',contaId:document.getElementById('np-cta').value,status:'pendente',obs:document.getElementById('np-obs').value});
+  FM(); salvar(n);
+}
+function modalGerarMes(){
+  const cts=DB.contratos.filter(c=>c.status==='ativo'); if(cts.length===0){alert('Nenhum contrato ativo.');return;}
+  AM('📅 Gerar Cobranças do Mês',`
+    <div style="font-size:13px;margin-bottom:14px">Gera cobranças para <strong>todos os contratos ativos</strong> no mês selecionado.<br><small style="color:var(--mut)">Cobranças já existentes para o mês serão ignoradas.</small></div>
+    <div class="campo"><label>Mês de Referência</label><input id="gm-mes" type="month" value="${mesAtual()}"/></div>
+    <div style="font-size:12px;margin-bottom:10px;color:var(--mut)">Contratos ativos: <strong style="color:var(--txt)">${cts.length}</strong></div>
+    ${cts.map(ct=>{const im=DB.imoveis.find(x=>x.id===ct.imovelId);const iq=DB.inquilinos.find(x=>x.id===ct.inquilinoId);return `<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--bor)">${im?esc(im.nome):''} — ${iq?esc(iq.nome):''} — ${fmt(ct.valorAluguel)} · dia ${ct.diaVencimento}</div>`;}).join('')}
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('📅 Gerar Todas',`execGerarMes()`, 'var(--acc)','#000')}</div>
+  `);
+}
+function execGerarMes(){
+  const mesBase=document.getElementById('gm-mes').value; if(!mesBase){alert('Selecione o mês.');return;}
+  const [ano,mes]=mesBase.split('-'); const cts=DB.contratos.filter(c=>c.status==='ativo');
+  const n=JSON.parse(JSON.stringify(DB)); let gerados=0, ignorados=0;
+  cts.forEach(ct=>{
+    if(n.pagamentos.some(p=>p.contratoId===ct.id&&p.referencia===mesBase)){ignorados++;return;}
+    n.pagamentos.push({id:uid(),contratoId:ct.id,imovelId:ct.imovelId,inquilinoId:ct.inquilinoId,referencia:mesBase,vencimento:`${ano}-${mes}-${String(ct.diaVencimento).padStart(2,'0')}`,valorPrevisto:ct.valorAluguel,valorPago:0,dataPagamento:'',contaId:ct.contaId,status:'pendente',obs:''});
+    gerados++;
+  });
+  FM(); salvar(n);
+  setStatus('ok',`✅ ${gerados} cobrança(s) gerada(s)${ignorados>0?`, ${ignorados} já existia(m)`:''}`);
+  setTimeout(()=>esconderStatus(),4000);
+}
+
+// ══════════════════════════════════════════
+// DESPESAS
+// ══════════════════════════════════════════
+let _dpStF='todos', _dpTpF='todos', _dpImF='';
+const TIPOS_DP=['iptu','água','luz','gás','condomínio','manutenção','reforma','seguro','outro'];
+function htmlDP(){
+  let lst=[...DB.despesas];
+  if(_dpStF==='atrasado') lst=lst.filter(d=>d.status!=='pago'&&diasAtraso(d.vencimento)>0);
+  else if(_dpStF!=='todos') lst=lst.filter(d=>d.status===_dpStF);
+  if(_dpTpF!=='todos') lst=lst.filter(d=>d.tipo===_dpTpF);
+  if(_dpImF) lst=lst.filter(d=>d.imovelId===_dpImF);
+  lst.sort((a,b)=>a.vencimento>b.vencimento?1:-1);
+  const totPrev=lst.reduce((s,d)=>s+(d.valor||0),0), totPago=lst.filter(d=>d.status==='pago').reduce((s,d)=>s+(d.valor||0),0);
+  return `<div class="row" style="margin-bottom:14px;align-items:center"><div class="titulo acc" style="margin:0;flex:1">🧾 Despesas</div>${B('+ Nova Despesa','modalDespesa()','var(--acc)','#000')}</div>
+  <div class="card" style="margin-bottom:14px;padding:12px"><div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">
+    <div style="flex:1;min-width:140px" class="campo"><label>Imóvel</label><select onchange="_dpImF=this.value;renderAba()"><option value="">Todos</option>${DB.imoveis.map(i=>`<option value="${i.id}"${_dpImF===i.id?' selected':''}>${esc(i.nome)}</option>`).join('')}</select></div>
+    <div style="flex:1;min-width:120px" class="campo"><label>Tipo</label><select onchange="_dpTpF=this.value;renderAba()"><option value="todos">Todos os tipos</option>${TIPOS_DP.map(t=>`<option value="${t}"${_dpTpF===t?' selected':''}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('')}</select></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap">${['todos','pendente','pago','atrasado'].map(s=>`<button type="button" onclick="_dpStF='${s}';renderAba()" style="background:${_dpStF===s?'var(--acc)':'var(--sur)'};color:${_dpStF===s?'#000':'var(--mut)'};padding:5px 10px;font-size:11px;border:1px solid var(--bor);border-radius:var(--r);cursor:pointer;font-weight:700">${{todos:'Todos',pendente:'⏳ Pendentes',pago:'✓ Pagas',atrasado:'⚠ Atrasadas'}[s]}</button>`).join('')}</div>
+  </div></div>
+  <div class="kpis" style="margin-bottom:14px"><div class="card kpi"><div class="kpi-l">Total (filtro)</div><div class="kpi-v">${fmt(totPrev)}</div></div><div class="card kpi"><div class="kpi-l">Pago</div><div class="kpi-v" style="color:#3fb950">${fmt(totPago)}</div></div><div class="card kpi"><div class="kpi-l">Em Aberto</div><div class="kpi-v" style="color:var(--orn)">${fmt(totPrev-totPago)}</div></div></div>
+  ${lst.length===0?`<div class="card" style="text-align:center;padding:32px;color:var(--mut)">Nenhuma despesa encontrada.</div>`:`<div class="card"><table><thead><tr><th>Imóvel</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Pago em</th><th>Conta</th><th>Status</th><th></th></tr></thead><tbody>${lst.map(d=>{const im=DB.imoveis.find(x=>x.id===d.imovelId);const cta=DB.contas.find(x=>x.id===d.contaId);const st=stDesp(d);const da=diasAtraso(d.vencimento);return `<tr><td style="font-weight:700">${im?esc(im.nome):'?'}</td><td><span class="tag tag-az">${esc(d.tipo)}</span></td><td style="color:var(--mut);font-size:11px">${esc(d.descricao||'—')}</td><td>${fmt(d.valor)}</td><td>${fmtData(d.vencimento)}${da>0&&st!=='pago'?`<br><span style="color:#f85149;font-size:10px">${da}d</span>`:''}</td><td>${d.dataPagamento?fmtData(d.dataPagamento):'—'}</td><td style="font-size:11px;color:var(--mut)">${cta?esc(cta.nome):'—'}</td><td><span class="tag ${corSt(st)}">${lblSt(st)}</span></td><td><div class="row" style="gap:3px;justify-content:flex-end">${st!=='pago'?B('✓',`modalPagarDesp('${d.id}')`, 'var(--grn)','#fff','font-size:10px;padding:3px 7px'):''}${B('✏️',`modalDespesa('${d.id}')`, 'var(--sur)','var(--txt)','font-size:10px;padding:3px 7px')}${B('🗑',`remDesp('${d.id}')`, 'var(--bg)','var(--red)','font-size:10px;padding:3px 7px;border:1px solid var(--bor)')}</div></td></tr>`;}).join('')}</tbody></table></div>`}`;
+}
+function modalDespesa(id){
+  const d=id?DB.despesas.find(x=>x.id===id):null;
+  const v=(f,def='')=>d?esc(String(d[f]!==undefined?d[f]:def)):String(def);
+  AM(`${d?'✏️ Editar':'➕ Nova'} Despesa`,`
+    <div class="row"><div style="flex:1" class="campo"><label>Imóvel *</label><select id="dp-im"><option value="">Selecione...</option>${DB.imoveis.map(i=>`<option value="${i.id}"${v('imovelId')===i.id?' selected':''}>${esc(i.nome)}</option>`).join('')}</select></div><div style="flex:1" class="campo"><label>Tipo *</label><select id="dp-tp">${TIPOS_DP.map(t=>`<option value="${t}"${v('tipo')===t?' selected':''}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('')}</select></div></div>
+    <div class="campo"><label>Descrição</label><input id="dp-desc" value="${v('descricao')}" placeholder="Ex: IPTU 2025, Conta de água Jan/25..."/></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Valor (R$) *</label><input id="dp-val" type="number" step="0.01" value="${v('valor','0')}"/></div><div style="flex:1" class="campo"><label>Vencimento *</label><input id="dp-venc" type="date" value="${v('vencimento',hoje())}"/></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Conta (pagamento)</label><select id="dp-cta"><option value="">Selecione...</option>${DB.contas.map(c=>`<option value="${c.id}"${v('contaId')===c.id?' selected':''}>${esc(c.nome)}</option>`).join('')}</select></div><div style="flex:1" class="campo"><label>Status</label><select id="dp-st" onchange="document.getElementById('dp-ext').style.display=this.value==='pago'?'block':'none'"><option value="pendente"${v('status')==='pendente'?' selected':''}>⏳ Pendente</option><option value="pago"${v('status')==='pago'?' selected':''}>✓ Pago</option></select></div></div>
+    <div id="dp-ext" style="${v('status')==='pago'?'':'display:none'}"><div class="campo"><label>Data Pagamento</label><input id="dp-dtpag" type="date" value="${v('dataPagamento',hoje())}"/></div></div>
+    <div class="campo"><label>Observações</label><textarea id="dp-obs" rows="2">${v('obs')}</textarea></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('💾 Salvar',`salvDesp('${id||''}')`, 'var(--acc)','#000')}</div>
+  `);
+}
+function salvDesp(id){
+  const imId=document.getElementById('dp-im').value, val=parseFloat(document.getElementById('dp-val').value)||0, venc=document.getElementById('dp-venc').value;
+  if(!imId||!val||!venc){alert('Preencha: Imóvel, Valor e Vencimento.');return;}
+  const st=document.getElementById('dp-st').value;
+  const dtEl=document.getElementById('dp-dtpag');
+  const obj={imovelId:imId,tipo:document.getElementById('dp-tp').value,descricao:document.getElementById('dp-desc').value.trim(),valor:val,vencimento:venc,dataPagamento:st==='pago'?(dtEl?dtEl.value||hoje():hoje()):'',contaId:document.getElementById('dp-cta').value,status:st,obs:document.getElementById('dp-obs').value.trim()};
+  const n=JSON.parse(JSON.stringify(DB));
+  if(id){const i=n.despesas.findIndex(x=>x.id===id);if(i>=0)n.despesas[i]={...n.despesas[i],...obj};}
+  else n.despesas.push({id:uid(),...obj});
+  FM(); salvar(n);
+}
+function modalPagarDesp(id){
+  AM('✅ Pagar Despesa',`
+    <div class="row"><div style="flex:1" class="campo"><label>Data do Pagamento</label><input id="pd-dt" type="date" value="${hoje()}"/></div><div style="flex:1" class="campo"><label>Conta</label><select id="pd-cta"><option value="">Selecione...</option>${DB.contas.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('')}</select></div></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('✅ Confirmar',`salvPagarDesp('${id}')`, 'var(--acc)','#000')}</div>
+  `);
+}
+function salvPagarDesp(id){
+  const dt=document.getElementById('pd-dt').value; if(!dt){alert('Informe a data.');return;}
+  const n=JSON.parse(JSON.stringify(DB)); const i=n.despesas.findIndex(x=>x.id===id);
+  if(i>=0)n.despesas[i]={...n.despesas[i],status:'pago',dataPagamento:dt,contaId:document.getElementById('pd-cta').value};
+  FM(); salvar(n);
+}
+function remDesp(id){ ACF('Remover esta despesa?',()=>{const n=JSON.parse(JSON.stringify(DB));n.despesas=n.despesas.filter(x=>x.id!==id);salvar(n);}); }
+
+// ══════════════════════════════════════════
+// RELATÓRIOS
+// ══════════════════════════════════════════
+let _rlAno=new Date().getFullYear();
+function htmlRL(){
+  const ano=_rlAno; const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const recMes=meses.map((m,i)=>{const ref=`${ano}-${String(i+1).padStart(2,'0')}`;const pp=DB.pagamentos.filter(p=>p.referencia===ref);return {m,esp:pp.reduce((s,p)=>s+(p.valorPrevisto||0),0),rec:pp.filter(p=>p.status==='pago').reduce((s,p)=>s+(p.valorPago||p.valorPrevisto||0),0)};});
+  const despMes=meses.map((m,i)=>{const ref=`${ano}-${String(i+1).padStart(2,'0')}`;const dd=DB.despesas.filter(d=>d.vencimento&&d.vencimento.startsWith(ref));return {m,tot:dd.reduce((s,d)=>s+(d.valor||0),0),pago:dd.filter(d=>d.status==='pago').reduce((s,d)=>s+(d.valor||0),0)};});
+  const totEsp=recMes.reduce((s,x)=>s+x.esp,0), totRec=recMes.reduce((s,x)=>s+x.rec,0), totDesp=despMes.reduce((s,x)=>s+x.pago,0);
+  const porIm=DB.imoveis.map(im=>{
+    const pp=DB.pagamentos.filter(p=>p.imovelId===im.id&&p.referencia&&p.referencia.startsWith(String(ano)));
+    const dd=DB.despesas.filter(d=>d.imovelId===im.id&&d.vencimento&&d.vencimento.startsWith(String(ano)));
+    const esp=pp.reduce((s,p)=>s+(p.valorPrevisto||0),0), rec=pp.filter(p=>p.status==='pago').reduce((s,p)=>s+(p.valorPago||p.valorPrevisto||0),0);
+    const dtot=dd.reduce((s,d)=>s+(d.valor||0),0), dpago=dd.filter(d=>d.status==='pago').reduce((s,d)=>s+(d.valor||0),0);
+    return {im,esp,rec,dtot,dpago,liq:rec-dpago};
+  });
+  return `<div class="row" style="margin-bottom:14px;align-items:center">
+    <div class="titulo acc" style="margin:0;flex:1">📈 Relatórios</div>
+    <div class="row" style="gap:6px">
+      <button type="button" onclick="_rlAno--;renderAba()" style="background:var(--sur);color:var(--txt);padding:5px 12px;border:1px solid var(--bor);border-radius:var(--r);cursor:pointer;font-weight:700">← ${ano-1}</button>
+      <div style="font-weight:800;font-size:16px;padding:5px 16px;background:var(--card);border:1px solid var(--bor);border-radius:var(--r)">${ano}</div>
+      <button type="button" onclick="_rlAno++;renderAba()" style="background:var(--sur);color:var(--txt);padding:5px 12px;border:1px solid var(--bor);border-radius:var(--r);cursor:pointer;font-weight:700">${ano+1} →</button>
+    </div>
+  </div>
+  <div class="kpis" style="margin-bottom:14px">
+    <div class="card kpi"><div class="kpi-l">Receita Esperada ${ano}</div><div class="kpi-v">${fmt(totEsp)}</div></div>
+    <div class="card kpi"><div class="kpi-l">Receita Recebida ${ano}</div><div class="kpi-v" style="color:#3fb950">${fmt(totRec)}</div></div>
+    <div class="card kpi"><div class="kpi-l">Despesas Pagas ${ano}</div><div class="kpi-v" style="color:var(--orn)">${fmt(totDesp)}</div></div>
+    <div class="card kpi"><div class="kpi-l">Resultado Líquido</div><div class="kpi-v" style="color:${totRec-totDesp>=0?'#3fb950':'#f85149'}">${fmt(totRec-totDesp)}</div></div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-weight:700;margin-bottom:12px">📊 Receitas × Despesas por Mês — ${ano}</div>
+    <table><thead><tr><th>Mês</th><th>Receita Esperada</th><th>Receita Recebida</th><th>Despesas</th><th>Resultado</th></tr></thead><tbody>
+      ${recMes.map((rm,i)=>{const dm=despMes[i];const res=rm.rec-dm.pago;return `<tr><td style="font-weight:700">${rm.m}</td><td>${rm.esp>0?fmt(rm.esp):'—'}</td><td style="color:#3fb950">${rm.rec>0?fmt(rm.rec):'—'}</td><td style="color:var(--orn)">${dm.pago>0?fmt(dm.pago):'—'}</td><td style="font-weight:700;color:${res>0?'#3fb950':res<0?'#f85149':'var(--mut)'}">${rm.rec>0||dm.pago>0?fmt(res):'—'}</td></tr>`;}).join('')}
+      <tr style="font-weight:700;background:var(--bg);border-top:2px solid var(--acc)"><td>TOTAL</td><td>${fmt(totEsp)}</td><td style="color:#3fb950">${fmt(totRec)}</td><td style="color:var(--orn)">${fmt(totDesp)}</td><td style="color:${totRec-totDesp>=0?'#3fb950':'#f85149'}">${fmt(totRec-totDesp)}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card">
+    <div style="font-weight:700;margin-bottom:12px">🏠 Por Imóvel — ${ano}</div>
+    <table><thead><tr><th>Imóvel</th><th>Status</th><th>Receita Esperada</th><th>Receita Recebida</th><th>Despesas Pagas</th><th>Resultado Líquido</th></tr></thead><tbody>
+      ${porIm.length===0?'<tr><td colspan="6" style="text-align:center;color:var(--mut)">Nenhum dado.</td></tr>':''}
+      ${porIm.map(r=>`<tr><td style="font-weight:700">${esc(r.im.nome)}</td><td><span class="tag ${corSt(r.im.status)}">${lblSt(r.im.status)}</span></td><td>${r.esp>0?fmt(r.esp):'—'}</td><td style="color:#3fb950">${r.rec>0?fmt(r.rec):'—'}</td><td style="color:var(--orn)">${r.dpago>0?fmt(r.dpago):'—'}</td><td style="font-weight:700;color:${r.liq>0?'#3fb950':r.liq<0?'#f85149':'var(--mut)'}">${fmt(r.liq)}</td></tr>`).join('')}
+    </tbody></table>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// CADASTROS (CONTAS BANCÁRIAS)
+// ══════════════════════════════════════════
+function htmlCAD(){
+  return `<div class="titulo acc">🏦 Cadastros</div>
+  <div style="font-weight:700;font-size:14px;margin-bottom:12px">Contas Bancárias</div>
+  <div class="row" style="align-items:center;margin-bottom:14px"><div style="flex:1;color:var(--mut);font-size:12px">${DB.contas.length} conta(s) cadastrada(s)</div>${B('+ Nova Conta','modalConta()','var(--acc)','#000')}</div>
+  ${DB.contas.length===0?`<div class="card" style="text-align:center;padding:32px;color:var(--mut)">Nenhuma conta cadastrada.<br><small>Cadastre suas contas para identificar onde cada valor foi recebido ou pago.</small></div>`:''}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+    ${DB.contas.map(c=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div><div style="font-weight:700">${esc(c.nome)}</div><div style="font-size:11px;color:var(--mut)">${esc(c.banco||'')}${c.tipo?' — '+esc(c.tipo):''}</div>${c.agencia?`<div style="font-size:11px;color:var(--mut)">Ag: ${esc(c.agencia)} · Cc: ${esc(c.conta||'')}</div>`:''}</div>
+      <div class="row" style="gap:4px">${B('✏️',`modalConta('${c.id}')`, 'var(--sur)','var(--txt)','font-size:11px;padding:4px 8px')}${B('🗑',`remConta('${c.id}')`, 'var(--bg)','var(--red)','font-size:11px;padding:4px 8px;border:1px solid var(--bor)')}</div>
+    </div>`).join('')}
+  </div>`;
+}
+function modalConta(id){
+  const c=id?DB.contas.find(x=>x.id===id):null;
+  const v=(f,d='')=>c?esc(c[f]||d):d;
+  AM(`${c?'✏️ Editar':'➕ Nova'} Conta`,`
+    <div class="campo"><label>Nome da Conta *</label><input id="cc-nome" value="${v('nome')}" placeholder="Ex: Bradesco Corrente, PIX Caixa..."/></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Banco</label><input id="cc-banco" value="${v('banco')}"/></div><div style="flex:1" class="campo"><label>Tipo</label><select id="cc-tipo"><option value="corrente"${v('tipo')==='corrente'?' selected':''}>Conta Corrente</option><option value="poupanca"${v('tipo')==='poupanca'?' selected':''}>Poupança</option><option value="pix"${v('tipo')==='pix'?' selected':''}>PIX</option><option value="dinheiro"${v('tipo')==='dinheiro'?' selected':''}>Dinheiro/Caixa</option><option value="outro"${v('tipo')==='outro'?' selected':''}>Outro</option></select></div></div>
+    <div class="row"><div style="flex:1" class="campo"><label>Agência</label><input id="cc-ag" value="${v('agencia')}" placeholder="0000"/></div><div style="flex:1" class="campo"><label>Conta</label><input id="cc-cc" value="${v('conta')}" placeholder="00000-0"/></div></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">${B('Cancelar','FM()','var(--sur)','var(--txt)')}${B('💾 Salvar',`salvConta('${id||''}')`, 'var(--acc)','#000')}</div>
+  `);
+}
+function salvConta(id){
+  const nome=document.getElementById('cc-nome').value.trim(); if(!nome){alert('Informe o nome.');return;}
+  const obj={nome,banco:document.getElementById('cc-banco').value.trim(),tipo:document.getElementById('cc-tipo').value,agencia:document.getElementById('cc-ag').value.trim(),conta:document.getElementById('cc-cc').value.trim()};
+  const n=JSON.parse(JSON.stringify(DB));
+  if(id){const i=n.contas.findIndex(x=>x.id===id);if(i>=0)n.contas[i]={...n.contas[i],...obj};}
+  else n.contas.push({id:uid(),...obj});
+  FM(); salvar(n);
+}
+function remConta(id){
+  const emUso=DB.pagamentos.some(p=>p.contaId===id)||DB.despesas.some(d=>d.contaId===id)||DB.contratos.some(c=>c.contaId===id);
+  if(emUso){alert('Esta conta está em uso em pagamentos ou contratos. Não pode ser removida.');return;}
+  ACF('Remover esta conta?',()=>{const n=JSON.parse(JSON.stringify(DB));n.contas=n.contas.filter(x=>x.id!==id);salvar(n);});
+}
+
+// ══════════════════════════════════════════
+// AUTH & BOOT
+// ══════════════════════════════════════════
+async function entrar(){
+  const t=document.getElementById('inp-token').value.trim(); if(!t){document.getElementById('err-token').style.display='block';return;}
+  setToken(t); document.getElementById('err-token').style.display='none'; await init();
+}
+function desconectar(){ if(!confirm('Desconectar e trocar de token?'))return; localStorage.removeItem(AK+'_token'); location.reload(); }
+
+async function init(){
+  const loading=document.getElementById('tela-loading'), tokenTela=document.getElementById('tela-token');
+  const navbar=document.getElementById('navbar'), main=document.getElementById('main');
+  loading.style.display='flex'; tokenTela.style.display='none';
+  if(!getToken()){loading.style.display='none';tokenTela.style.display='flex';return;}
+  document.getElementById('load-msg').textContent='Conectando ao GitHub...';
+  const dados=await ghCarregar();
+  if(dados===null){ loading.style.display='none'; localStorage.removeItem(AK+'_token'); tokenTela.style.display='flex'; document.getElementById('err-token').style.display='block'; return; }
+  DB=dados;
+  if(!DB.imoveis)DB.imoveis=[];
+  if(!DB.inquilinos)DB.inquilinos=[];
+  if(!DB.contratos)DB.contratos=[];
+  if(!DB.pagamentos)DB.pagamentos=[];
+  if(!DB.despesas)DB.despesas=[];
+  if(!DB.contas)DB.contas=[];
+  loading.style.display='none'; navbar.style.display='flex'; main.style.display='block';
+  if(!_shaAtual&&_sha)_shaAtual=_sha;
+  renderAba(); iniciarSync();
+}
+init();
+</script>
+</body>
+</html>
