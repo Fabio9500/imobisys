@@ -1,0 +1,26 @@
+{
+  "versao": 1,
+  "imoveis": [
+    {
+      "id": "mqts6db0553nv",
+      "nome": "Residência K27",
+      "tipo": "Casa",
+      "endereco": "27",
+      "bairro": "Salobrinho",
+      "cidade": "Ilheus",
+      "uf": "BA",
+      "cep": "45662200",
+      "area": 405,
+      "status": "vago",
+      "iptu_inscricao": "",
+      "iptu_valor_anual": 0,
+      "iptu_venc_mes": 3,
+      "obs": ""
+    }
+  ],
+  "inquilinos": [],
+  "contratos": [],
+  "pagamentos": [],
+  "despesas": [],
+  "contas": []
+}
