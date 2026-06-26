@@ -1,0 +1,36 @@
+{
+  "name": "ImobiSys — Controle de Imóveis",
+  "short_name": "ImobiSys",
+  "description": "Sistema completo de controle de imóveis, aluguéis, contratos e documentos",
+  "start_url": "./imobisys.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0d1117",
+  "theme_color": "#4ade80",
+  "lang": "pt-BR",
+  "categories": ["finance", "productivity", "business"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Ver resumo dos imóveis",
+      "url": "./imobisys.html"
+    }
+  ]
+}
