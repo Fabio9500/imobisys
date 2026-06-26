@@ -3,7 +3,7 @@
   "imoveis": [
     {
       "id": "mqts6db0553nv",
-      "nome": "ResidÃªncia K27",
+      "nome": "ResidÃÂªncia K27",
       "tipo": "Casa",
       "endereco": "27",
       "bairro": "Salobrinho",
@@ -13,9 +13,12 @@
       "area": 405,
       "status": "vago",
       "iptu_inscricao": "",
-      "iptu_valor_anual": 0,
+      "iptu_valor_anual": 3500,
       "iptu_venc_mes": 3,
-      "obs": ""
+      "obs": "",
+      "valorImovel": 0,
+      "mobiliado": "sem",
+      "categoria": "residencial"
     }
   ],
   "inquilinos": [
@@ -36,5 +39,8 @@
   "pagamentos": [],
   "despesas": [],
   "contas": [],
-  "vistorias": []
+  "vistorias": [],
+  "seguros": [],
+  "chaves": [],
+  "manutencoes": []
 }
