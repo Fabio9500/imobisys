@@ -83,6 +83,28 @@ tr:hover td{background:#1e2a3a22}
 .fab-tip{position:absolute;right:58px;background:#111;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;top:50%;transform:translateY(-50%)}
 .fab:hover .fab-tip{opacity:1}
 @media print{#navbar,.noprint,#status,#fab-buttons{display:none!important}#main{padding:0;max-width:none}}
+
+/* ── LOGIN / AUTENTICAÇÃO ───────────────────────────────── */
+#tela-login{position:fixed;inset:0;background:var(--bg);z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;}
+.login-card{background:var(--card);border:1px solid var(--bor);border-radius:14px;padding:28px;max-width:360px;width:100%;}
+.login-logo{font-size:2.8rem;margin-bottom:10px;text-align:center;}
+.login-title{font-size:1.1rem;font-weight:800;text-align:center;margin-bottom:4px;color:var(--txt);}
+.login-sub{font-size:.78rem;color:var(--mut);text-align:center;margin-bottom:20px;line-height:1.6;}
+.login-campo-imb{position:relative;margin-bottom:4px;}
+.login-campo-imb input{width:100%;padding:11px 44px 11px 14px;background:var(--bg);border:1.5px solid var(--bor);border-radius:8px;color:var(--txt);font-family:inherit;font-size:1.05rem;letter-spacing:4px;text-align:center;transition:border-color .18s;}
+.login-campo-imb input::placeholder{letter-spacing:1px;font-size:.85rem;}
+.login-campo-imb input:focus{outline:none;border-color:var(--acc);}
+.login-olho-imb{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--mut);padding:4px;}
+.btn-login-imb{width:100%;padding:11px;border-radius:8px;background:var(--acc);color:#000;border:none;font-family:inherit;font-size:.9rem;font-weight:800;cursor:pointer;margin-top:12px;}
+.btn-login-imb:hover{opacity:.88;}
+.login-erro-imb{background:#da363322;border:1px solid var(--red);border-radius:7px;padding:8px 12px;font-size:.78rem;color:var(--red);text-align:center;margin-bottom:10px;display:none;line-height:1.5;}
+.login-block-imb{background:#4ade8022;border:1px solid var(--acc);border-radius:7px;padding:8px 12px;font-size:.78rem;color:var(--acc);text-align:center;margin-bottom:10px;display:none;line-height:1.5;}
+.login-link-imb{display:block;text-align:center;margin-top:12px;font-size:.72rem;color:var(--mut);cursor:pointer;text-decoration:underline;}
+.login-link-imb:hover{color:var(--txt);}
+.btn-lock-imb{background:transparent;border:1px solid var(--bor);color:var(--mut);padding:4px 9px;border-radius:var(--r);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;}
+.btn-lock-imb:hover{border-color:var(--acc);color:var(--acc);}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.shake{animation:shake .4s ease;}
 </style>
 </head>
 <body>
@@ -108,9 +130,29 @@ tr:hover td{background:#1e2a3a22}
   </div>
 </div>
 
+<!-- ── TELA DE LOGIN ──────────────────────────────────────── -->
+<div id="tela-login" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">🔒</div>
+    <div class="login-title" id="login-titulo">Acesso Restrito</div>
+    <div class="login-sub" id="login-sub-txt">ImobiSys — Controle de Imóveis</div>
+    <div class="login-block-imb" id="login-block-info"></div>
+    <div class="login-erro-imb" id="login-erro"></div>
+    <div class="login-campo-imb">
+      <input type="password" id="login-senha" placeholder="••••••••"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')verificarSenha()">
+      <button class="login-olho-imb" onclick="toggleSenhaVisivel()" id="login-olho-btn" title="Mostrar/ocultar senha">👁</button>
+    </div>
+    <button type="button" class="btn-login-imb" id="btn-login" onclick="verificarSenha()">🔓 Entrar</button>
+    <span class="login-link-imb" onclick="esqueceuSenha()" id="login-link-esqueceu">Esqueci minha senha</span>
+  </div>
+</div>
+
 <div id="navbar" style="display:none">
   <div class="logo">🏠 ImobiSys</div>
   <div class="tabs" id="tabs"></div>
+  <button type="button" class="btn-lock-imb noprint" onclick="bloquearManualmente()" title="Bloquear o sistema">🔒</button>
   <button type="button" onclick="desconectar()" style="background:transparent;color:var(--mut);font-size:11px;padding:4px 8px;border:1px solid var(--bor);" title="Trocar token">⚙</button>
 </div>
 <div id="main" style="display:none"></div>
@@ -142,6 +184,143 @@ tr:hover td{background:#1e2a3a22}
 </div>
 
 <script>
+// ── AUTENTICAÇÃO ─────────────────────────────────────────────
+// Senha compartilhada — sessão INDEPENDENTE por sistema
+const AUTH_KEY   = 'app_auth_hash';
+const AUTH_TS    = 'app_auth_ts_imb';
+const AUTH_TRIES = 'app_auth_tries';
+const AUTH_BLOCK = 'app_auth_block';
+const AUTH_TIMEOUT   = 30 * 60 * 1000; // 30 min sem uso → pede senha novamente
+const AUTH_BLOCK_MS  =  5 * 60 * 1000; // 5 min de bloqueio após 3 erros
+const AUTH_MAX_TRIES = 3;
+
+async function sha256(texto){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function authValido(){
+  const ts = parseInt(localStorage.getItem(AUTH_TS)||'0');
+  return Date.now() - ts < AUTH_TIMEOUT;
+}
+
+function refreshAuth(){
+  localStorage.setItem(AUTH_TS, Date.now().toString());
+}
+
+function mostrarLoginScreen(modoDefinir){
+  document.getElementById('tela-loading').style.display = 'none';
+  const tela  = document.getElementById('tela-login');
+  const sub   = document.getElementById('login-sub-txt');
+  const titulo= document.getElementById('login-titulo');
+  const link  = document.getElementById('login-link-esqueceu');
+  const btn   = document.getElementById('btn-login');
+  if(modoDefinir){
+    titulo.textContent = '🔑 Criar Senha';
+    sub.textContent    = 'Defina uma senha para proteger este sistema.\nEla valerá também para Cartões PF, PJ e ChequeSys.';
+    link.style.display = 'none';
+    btn.textContent    = '✅ Definir senha';
+    tela.dataset.modo  = 'definir';
+  } else {
+    titulo.textContent = 'Acesso Restrito';
+    sub.textContent    = 'ImobiSys — Controle de Imóveis';
+    link.style.display = 'block';
+    btn.textContent    = '🔓 Entrar';
+    tela.dataset.modo  = 'login';
+  }
+  tela.style.display = 'flex';
+  setTimeout(()=>document.getElementById('login-senha').focus(), 120);
+}
+
+async function verificarSenha(){
+  const senhaEl  = document.getElementById('login-senha');
+  const erroEl   = document.getElementById('login-erro');
+  const blockEl  = document.getElementById('login-block-info');
+  const senha    = senhaEl.value.trim();
+  erroEl.style.display  = 'none';
+  blockEl.style.display = 'none';
+
+  const blockUntil = parseInt(localStorage.getItem(AUTH_BLOCK)||'0');
+  if(Date.now() < blockUntil){
+    const min = Math.ceil((blockUntil - Date.now()) / 60000);
+    blockEl.textContent   = `⛔ Muitas tentativas incorretas. Aguarde ${min} minuto(s).`;
+    blockEl.style.display = 'block';
+    return;
+  }
+  if(!senha){ erroEl.textContent='Digite a senha.'; erroEl.style.display='block'; return; }
+  if(senha.length < 4){ erroEl.textContent='A senha deve ter pelo menos 4 caracteres.'; erroEl.style.display='block'; return; }
+
+  const modo = document.getElementById('tela-login').dataset.modo;
+  const hash = await sha256(senha);
+
+  if(modo === 'definir'){
+    localStorage.setItem(AUTH_KEY, hash);
+    localStorage.removeItem(AUTH_TRIES);
+    localStorage.removeItem(AUTH_BLOCK);
+    refreshAuth();
+    document.getElementById('tela-login').style.display = 'none';
+    senhaEl.value = '';
+    await initAposAuth();
+    return;
+  }
+
+  const hashSalvo = localStorage.getItem(AUTH_KEY);
+  if(hash === hashSalvo){
+    localStorage.removeItem(AUTH_TRIES);
+    localStorage.removeItem(AUTH_BLOCK);
+    refreshAuth();
+    document.getElementById('tela-login').style.display = 'none';
+    senhaEl.value = '';
+    await initAposAuth();
+  } else {
+    const tries = (parseInt(localStorage.getItem(AUTH_TRIES)||'0')) + 1;
+    localStorage.setItem(AUTH_TRIES, tries.toString());
+    const restam = AUTH_MAX_TRIES - tries;
+    if(tries >= AUTH_MAX_TRIES){
+      localStorage.setItem(AUTH_BLOCK, (Date.now() + AUTH_BLOCK_MS).toString());
+      localStorage.removeItem(AUTH_TRIES);
+      erroEl.textContent = '⛔ Senha incorreta. Sistema bloqueado por 5 minutos.';
+    } else {
+      erroEl.textContent = `❌ Senha incorreta. ${restam} tentativa(s) restante(s).`;
+    }
+    erroEl.style.display = 'block';
+    senhaEl.classList.add('shake');
+    senhaEl.addEventListener('animationend', ()=>senhaEl.classList.remove('shake'), {once:true});
+    senhaEl.value = '';
+    senhaEl.focus();
+  }
+}
+
+function toggleSenhaVisivel(){
+  const inp = document.getElementById('login-senha');
+  const btn = document.getElementById('login-olho-btn');
+  if(inp.type === 'password'){ inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+function esqueceuSenha(){
+  if(!confirm('Isso irá redefinir sua senha de acesso.\n\nSeus dados NÃO serão apagados.\n\nDeseja continuar?')) return;
+  localStorage.removeItem(AUTH_KEY);
+  localStorage.removeItem(AUTH_TRIES);
+  localStorage.removeItem(AUTH_BLOCK);
+  localStorage.removeItem(AUTH_TS);
+  document.getElementById('login-erro').style.display       = 'none';
+  document.getElementById('login-block-info').style.display = 'none';
+  mostrarLoginScreen(true);
+}
+
+function bloquearManualmente(){
+  localStorage.removeItem(AUTH_TS);
+  location.reload();
+}
+
+async function verificarAuth(){
+  const hashSalvo = localStorage.getItem(AUTH_KEY);
+  if(!hashSalvo){ mostrarLoginScreen(true); return; }
+  if(authValido()){ refreshAuth(); await initAposAuth(); return; }
+  mostrarLoginScreen(false);
+}
+
 // ══════════════════════════════════════════
 // CONFIG GITHUB
 // ══════════════════════════════════════════
@@ -2519,11 +2698,11 @@ function gerarRelatorioInad(iqId){
 // ══════════════════════════════════════════
 async function entrar(){
   const t=document.getElementById('inp-token').value.trim(); if(!t){document.getElementById('err-token').style.display='block';return;}
-  setToken(t); document.getElementById('err-token').style.display='none'; await init();
+  setToken(t); document.getElementById('err-token').style.display='none'; await initAposAuth();
 }
 function desconectar(){ if(!confirm('Desconectar e trocar de token?'))return; localStorage.removeItem(AK+'_token'); location.reload(); }
 
-async function init(){
+async function initAposAuth(){
   const loading=document.getElementById('tela-loading'), tokenTela=document.getElementById('tela-token');
   const navbar=document.getElementById('navbar'), main=document.getElementById('main');
   loading.style.display='flex'; tokenTela.style.display='none';
@@ -2685,7 +2864,7 @@ function instalarApp(){
 window.addEventListener('appinstalled',()=>{ setStatus('ok','🏠 ImobiSys instalado na tela inicial!'); setTimeout(()=>esconderStatus(),5000); });
 window.addEventListener('load',registrarSW);
 
-init();
+verificarAuth();
 </script>
 </body>
 </html>
