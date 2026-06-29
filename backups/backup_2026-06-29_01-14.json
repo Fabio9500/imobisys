@@ -1,0 +1,46 @@
+{
+  "versao": 1,
+  "imoveis": [
+    {
+      "id": "mqts6db0553nv",
+      "nome": "Residencia K27",
+      "tipo": "Casa",
+      "endereco": "27",
+      "bairro": "Salobrinho",
+      "cidade": "Ilheus",
+      "uf": "BA",
+      "cep": "45662200",
+      "area": 405,
+      "status": "vago",
+      "iptu_inscricao": "",
+      "iptu_valor_anual": 10000,
+      "iptu_venc_mes": 8,
+      "obs": "",
+      "valorImovel": 0,
+      "mobiliado": "sem",
+      "categoria": "residencial"
+    }
+  ],
+  "inquilinos": [
+    {
+      "id": "mqu706451hjyi",
+      "nome": "FABIO OLIVEIRA DOS SANTOS",
+      "cpf": "52984907515",
+      "rg": "0316306266",
+      "telefone": "73988807877",
+      "whatsapp": "73988807877",
+      "email": "fabio.telasul@uol.com.br",
+      "endereco_anterior": "Rua K, 27",
+      "fiador": "",
+      "obs": ""
+    }
+  ],
+  "contratos": [],
+  "pagamentos": [],
+  "despesas": [],
+  "contas": [],
+  "vistorias": [],
+  "seguros": [],
+  "chaves": [],
+  "manutencoes": []
+}
