@@ -112,6 +112,7 @@ tr:hover td{background:#1e2a3a22}
 <div id="tela-loading">
   <div style="font-size:36px">🏠</div>
   <div style="font-weight:800;font-size:22px;color:var(--acc)">ImobiSys</div>
+  <div id="load-versao" style="font-size:11px;color:var(--mut)"></div>
   <div class="spin"></div>
   <div style="color:var(--mut);font-size:13px" id="load-msg">Carregando...</div>
 </div>
@@ -136,6 +137,7 @@ tr:hover td{background:#1e2a3a22}
     <div class="login-logo">🔒</div>
     <div class="login-title" id="login-titulo">Acesso Restrito</div>
     <div class="login-sub" id="login-sub-txt">ImobiSys — Controle de Imóveis</div>
+    <div id="login-versao-txt" style="font-size:10px;color:var(--mut);text-align:center;margin-top:-14px;margin-bottom:16px"></div>
     <div class="login-block-imb" id="login-block-info"></div>
     <div class="login-erro-imb" id="login-erro"></div>
     <div class="login-campo-imb">
@@ -150,7 +152,7 @@ tr:hover td{background:#1e2a3a22}
 </div>
 
 <div id="navbar" style="display:none">
-  <div class="logo">🏠 ImobiSys</div>
+  <div class="logo">🏠 ImobiSys <span id="nav-versao" style="font-size:10px;color:var(--mut);font-weight:400;margin-left:2px"></span></div>
   <div class="tabs" id="tabs"></div>
   <button type="button" class="btn-lock-imb noprint" onclick="bloquearManualmente()" title="Bloquear o sistema">🔒</button>
   <button type="button" onclick="desconectar()" style="background:transparent;color:var(--mut);font-size:11px;padding:4px 8px;border:1px solid var(--bor);" title="Trocar token">⚙</button>
@@ -327,6 +329,13 @@ async function verificarAuth(){
 const GH_USER='Fabio9500', GH_REPO='imobisys', GH_FILE='dados.json';
 const GH_API=`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}`;
 const AK='imobisys';
+const VERSAO = 'v1.1';
+document.addEventListener('DOMContentLoaded', ()=>{
+  ['nav-versao','load-versao','login-versao-txt'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = VERSAO;
+  });
+});
 function getToken(){ return localStorage.getItem(AK+'_token')||''; }
 function setToken(t){ localStorage.setItem(AK+'_token',t); }
 let _sha=null, _shaAtual=null, _intervaloSync=null;
