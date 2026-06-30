@@ -154,11 +154,43 @@ tr:hover td{background:#1e2a3a22}
 <div id="navbar" style="display:none">
   <div class="logo">🏠 ImobiSys <span id="nav-versao" style="font-size:10px;color:var(--mut);font-weight:400;margin-left:2px"></span></div>
   <div class="tabs" id="tabs"></div>
-  <button type="button" class="btn-lock-imb noprint" onclick="bloquearManualmente()" title="Bloquear o sistema">🔒</button>
+  <div id="imb-usu-badge" style="display:none;align-items:center;gap:6px">
+    <div id="imb-usu-avatar" style="width:26px;height:26px;border-radius:50%;background:var(--acc);color:#000;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0"></div>
+    <div style="font-size:10px;line-height:1.2">
+      <div id="imb-usu-nome" style="font-weight:700;color:var(--txt)"></div>
+      <div id="imb-usu-perfil" style="color:var(--mut);font-size:9px"></div>
+    </div>
+    <button type="button" onclick="sairUsuarioIMB()" style="background:transparent;color:var(--mut);font-size:11px;padding:3px 7px;border:1px solid var(--bor);border-radius:var(--r);cursor:pointer;font-family:inherit">↩ Sair</button>
+  </div>
   <button type="button" onclick="desconectar()" style="background:transparent;color:var(--mut);font-size:11px;padding:4px 8px;border:1px solid var(--bor);" title="Trocar token">⚙</button>
 </div>
 <div id="main" style="display:none"></div>
 <div id="status"></div>
+
+<!-- TELA USUÁRIO -->
+<div id="tela-usuario" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9997;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="max-width:400px;width:100%;padding:32px;text-align:center">
+    <div style="font-size:40px;margin-bottom:8px">🏠</div>
+    <div style="font-weight:800;font-size:20px;color:var(--acc);margin-bottom:2px">ImobiSys</div>
+    <div id="imb-usu-versao" style="font-size:10px;color:var(--mut);margin-bottom:20px"></div>
+    <div id="imb-usu-e1">
+      <div style="font-size:13px;color:var(--mut);font-weight:600;margin-bottom:14px">Quem está acessando?</div>
+      <div id="imb-usu-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <div id="imb-usu-e2" style="display:none">
+      <div id="imb-usu-nome-sel" style="font-weight:700;font-size:16px;color:var(--acc);margin-bottom:16px"></div>
+      <div class="campo" style="text-align:left;margin-bottom:10px">
+        <label>Senha</label>
+        <input type="password" id="imb-login-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')loginUsuarioIMB()"/>
+      </div>
+      <div id="imb-login-erro" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none">Senha incorreta.</div>
+      <div style="display:flex;gap:8px">
+        <button type="button" onclick="loginUsuarioIMB()" style="flex:1;background:var(--acc);color:#000;padding:10px;font-weight:800;border:none;border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:13px">✅ Entrar</button>
+        <button type="button" onclick="voltarEscolhaIMB()" style="background:var(--sur);color:var(--txt);padding:10px 16px;border:none;border-radius:var(--r);cursor:pointer;font-family:inherit">← Voltar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="overlay" id="ov">
   <div class="modal">
@@ -311,17 +343,7 @@ function esqueceuSenha(){
   mostrarLoginScreen(true);
 }
 
-function bloquearManualmente(){
-  localStorage.removeItem(AUTH_TS);
-  location.reload();
-}
-
-async function verificarAuth(){
-  const hashSalvo = localStorage.getItem(AUTH_KEY);
-  if(!hashSalvo){ mostrarLoginScreen(true); return; }
-  if(authValido()){ refreshAuth(); await initAposAuth(); return; }
-  mostrarLoginScreen(false);
-}
+async function verificarAuth(){ await initAposAuth(); }
 
 // ══════════════════════════════════════════
 // CONFIG GITHUB
@@ -340,6 +362,164 @@ function getToken(){ return localStorage.getItem(AK+'_token')||''; }
 function setToken(t){ localStorage.setItem(AK+'_token',t); }
 let _sha=null, _shaAtual=null, _intervaloSync=null;
 let DB={};
+// ── SISTEMA DE USUÁRIOS IMB ──
+let USUARIO_ATUAL=null, _imbSelId=null;
+const IMB_LABELS={master:'Master',operador:'Operador',consulta:'Consulta'};
+const IMB_CORES={master:'var(--acc)',operador:'#1a5ba8',consulta:'var(--mut)'};
+const IMB_BLOQ_OP=new Set(['excluir','config']);
+const IMB_BLOQ_CO=new Set(['excluir','config','lancamentos']);
+function temPermIMB(a){
+  if(!USUARIO_ATUAL)return false;
+  if(USUARIO_ATUAL.perfil==='master')return true;
+  if(USUARIO_ATUAL.perfil==='operador')return !IMB_BLOQ_OP.has(a);
+  if(USUARIO_ATUAL.perfil==='consulta')return !IMB_BLOQ_CO.has(a);
+  return false;
+}
+async function hashSenhaIMB(s){
+  const b=new TextEncoder().encode(s);
+  const h=await crypto.subtle.digest('SHA-256',b);
+  return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+async function seedUsuariosIMB(){
+  DB.usuarios=[
+    {id:uid(),nome:'Fabio',login:'fabio',hash:await hashSenhaIMB('master'),perfil:'master',ativo:true},
+    {id:uid(),nome:'Alice',login:'alice',hash:await hashSenhaIMB('alice'),perfil:'operador',ativo:true},
+    {id:uid(),nome:'Bruno',login:'bruno',hash:await hashSenhaIMB('bruno'),perfil:'operador',ativo:true},
+  ];
+  await ghSalvar(DB);
+}
+function mostrarTelaUsuarioIMB(){
+  document.getElementById('tela-usuario').style.display='flex';
+  document.getElementById('imb-usu-versao').textContent=typeof VERSAO!=='undefined'?VERSAO:'';
+  document.getElementById('imb-usu-e1').style.display='block';
+  document.getElementById('imb-usu-e2').style.display='none';
+  const lista=(DB.usuarios||[]).filter(u=>u.ativo!==false);
+  let bioHtml='';
+  const bioStored=localStorage.getItem(BIO_KEY_IMB);
+  if(bioStored){try{const{userId}=JSON.parse(bioStored);const bu=lista.find(u=>u.id===userId);if(bu)bioHtml=`<button type="button" id="btn-bio-imb" onclick="entrarComBioIMB()" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:linear-gradient(135deg,#1a7a3c,#25a058);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-family:inherit;width:100%;font-weight:700;font-size:14px;margin-bottom:10px">🔒 Entrar como <strong>&nbsp;${bu.nome}&nbsp;</strong> com Face ID</button><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div style="flex:1;height:1px;background:var(--bor)"></div><span style="font-size:11px;color:var(--mut)">ou escolha o usuário</span><div style="flex:1;height:1px;background:var(--bor)"></div></div>`;}catch(e){}}
+  document.getElementById('imb-usu-lista').innerHTML=bioHtml+lista.map(u=>`
+    <button type="button" onclick="selecionarUsuarioIMB('${u.id}')"
+      style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border:1px solid var(--bor);border-radius:var(--r);cursor:pointer;font-family:inherit;width:100%;text-align:left">
+      <div style="width:36px;height:36px;border-radius:50%;background:${IMB_CORES[u.perfil]||'var(--mut)'};color:${u.perfil==='master'?'#000':'#fff'};font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${u.nome.charAt(0).toUpperCase()}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:14px;color:var(--txt)">${esc(u.nome)}</div><div style="font-size:11px;color:var(--mut)">${IMB_LABELS[u.perfil]||u.perfil}</div></div>
+      <div style="color:var(--mut);font-size:16px">›</div>
+    </button>`).join('');
+}
+async function loginUsuarioIMB(){
+  const u=(DB.usuarios||[]).find(x=>x.id===_imbSelId); if(!u)return;
+  const hash=await hashSenhaIMB(document.getElementById('imb-login-senha').value||''  );
+  if(hash!==u.hash){document.getElementById('imb-login-erro').style.display='block';return;}
+  USUARIO_ATUAL={id:u.id,nome:u.nome,perfil:u.perfil};
+  sessionStorage.setItem('imb_usu',JSON.stringify(USUARIO_ATUAL));
+  document.getElementById('tela-usuario').style.display='none';
+  atualizarBadgeIMB();
+  const nb=document.getElementById('navbar');
+  const mn=document.getElementById('main');
+  if(nb)nb.style.display='flex'; if(mn)mn.style.display='block';
+  renderAba();
+  setTimeout(()=>_oferecerBioIMB(u.id),1500);
+}
+function sairUsuarioIMB(){
+  USUARIO_ATUAL=null;
+  sessionStorage.removeItem('imb_usu');
+  document.getElementById('imb-usu-badge').style.display='none';
+  mostrarTelaUsuarioIMB();
+}
+function atualizarBadgeIMB(){
+  if(!USUARIO_ATUAL)return;
+  const badge=document.getElementById('imb-usu-badge');
+  badge.style.display='flex';
+  document.getElementById('imb-usu-avatar').textContent=USUARIO_ATUAL.nome.charAt(0).toUpperCase();
+  document.getElementById('imb-usu-avatar').style.background=IMB_CORES[USUARIO_ATUAL.perfil]||'var(--mut)';
+  document.getElementById('imb-usu-avatar').style.color=USUARIO_ATUAL.perfil==='master'?'#000':'#fff';
+  document.getElementById('imb-usu-nome').textContent=USUARIO_ATUAL.nome;
+  document.getElementById('imb-usu-perfil').textContent=IMB_LABELS[USUARIO_ATUAL.perfil]||'';
+}
+function verificarSessaoIMB(){
+  const s=sessionStorage.getItem('imb_usu');
+  if(s){try{const p=JSON.parse(s);const u=(DB.usuarios||[]).find(x=>x.id===p.id&&x.ativo!==false);if(u){USUARIO_ATUAL=p;atualizarBadgeIMB();return true;}}catch(e){}}
+  sessionStorage.removeItem('imb_usu');return false;
+}
+function bloquearManualmente(){sairUsuarioIMB();}
+
+// ── BIOMETRIA IMB (WebAuthn / Face ID / Touch ID) ──
+const BIO_KEY_IMB = 'imb_bio';
+async function bioIMBDisp(){ try{return !!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());}catch(e){return false;} }
+function _imbB64A(b64){return Uint8Array.from(atob(b64),c=>c.charCodeAt(0));}
+function _imbAB64(a){return btoa(String.fromCharCode(...new Uint8Array(a)));}
+
+async function registrarBioIMB(userId){
+  const u=(DB.usuarios||[]).find(x=>x.id===userId); if(!u) return false;
+  try{
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rp:{name:'ImobiSys',id:location.hostname||'localhost'},
+      user:{id:new TextEncoder().encode(userId),name:u.login||u.nome,displayName:u.nome},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
+      timeout:60000
+    }});
+    localStorage.setItem(BIO_KEY_IMB,JSON.stringify({credId:_imbAB64(cred.rawId),userId}));
+    return true;
+  }catch(e){if(e.name!=='NotAllowedError')console.warn('WebAuthn IMB:',e);return false;}
+}
+
+async function entrarComBioIMB(){
+  const stored=localStorage.getItem(BIO_KEY_IMB); if(!stored)return;
+  const {credId,userId}=JSON.parse(stored);
+  const u=(DB.usuarios||[]).find(x=>x.id===userId&&x.ativo!==false); if(!u)return;
+  const btn=document.getElementById('btn-bio-imb');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Aguardando...';}
+  try{
+    await navigator.credentials.get({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials:[{id:_imbB64A(credId),type:'public-key',transports:['internal']}],
+      userVerification:'required',timeout:60000
+    }});
+    USUARIO_ATUAL={id:u.id,nome:u.nome,perfil:u.perfil};
+    sessionStorage.setItem('imb_usu',JSON.stringify(USUARIO_ATUAL));
+    document.getElementById('tela-usuario').style.display='none';
+    atualizarBadgeIMB();
+    const nb=document.getElementById('navbar');
+    const mn=document.getElementById('main');
+    if(nb)nb.style.display='flex'; if(mn)mn.style.display='block';
+    renderAba();
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='🔒 Entrar com Face ID / Touch ID';}
+    if(e.name!=='NotAllowedError')console.warn('WebAuthn IMB auth:',e);
+  }
+}
+
+async function _oferecerBioIMB(userId){
+  if(localStorage.getItem(BIO_KEY_IMB))return;
+  if(!await bioIMBDisp())return;
+  AM('🔒 Ativar Face ID / Touch ID?',`
+    <div style="text-align:center;padding:10px 0">
+      <div style="font-size:48px;margin-bottom:10px">🔒</div>
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px">Entrar sem senha no próximo acesso</div>
+      <p style="color:var(--mut);font-size:13px;margin-bottom:20px">Use Face ID ou Touch ID neste dispositivo.</p>
+      <div style="display:flex;gap:8px">
+        ${B('✅ Ativar Agora',`ativarBioIMB('${userId}')`, 'var(--grn)','#fff')}
+        ${B('Agora não','FM()','var(--sur)','var(--txt)')}
+      </div>
+    </div>
+  `);
+}
+
+async function ativarBioIMB(userId){
+  FM();
+  const ok=await registrarBioIMB(userId);
+  setStatus(ok?'ok':'warn',ok?'✅ Face ID / Touch ID ativado!':'⚠ Não foi possível ativar biometria.');
+  setTimeout(()=>esconderStatus?.(),4000);
+}
+
+function removerBioIMB(){
+  if(!confirm('Remover Face ID / Touch ID deste dispositivo?'))return;
+  localStorage.removeItem(BIO_KEY_IMB);
+  setStatus('ok','Biometria removida deste dispositivo.');
+  setTimeout(()=>esconderStatus?.(),3000);
+  renderAba();
+}
 
 // ══════════════════════════════════════════
 // OFFLINE / FILA
@@ -2742,7 +2922,9 @@ async function initAposAuth(){
           if(!DB.despesas)DB.despesas=[];
           if(!DB.contas)DB.contas=[];
           if(!DB.vistorias)DB.vistorias=[];
-          loading.style.display='none'; navbar.style.display='flex'; main.style.display='block';
+          loading.style.display='none';
+          if(!verificarSessaoIMB()){mostrarTelaUsuarioIMB();return;}
+          navbar.style.display='flex'; main.style.display='block';
           if(!_shaAtual&&_sha)_shaAtual=_sha;
           renderAba(); iniciarSync();
           setStatus('warn','📴 Modo offline — dados do último acesso');
@@ -2775,7 +2957,10 @@ async function initAposAuth(){
   if(!DB.seguros)DB.seguros=[];
   if(!DB.chaves)DB.chaves=[];
   if(!DB.manutencoes)DB.manutencoes=[];
-  loading.style.display='none'; navbar.style.display='flex'; main.style.display='block';
+  if(!DB.usuarios||!DB.usuarios.length) await seedUsuariosIMB();
+  loading.style.display='none';
+  if(!verificarSessaoIMB()){mostrarTelaUsuarioIMB();return;}
+  navbar.style.display='flex'; main.style.display='block';
   if(!_shaAtual&&_sha)_shaAtual=_sha;
   renderAba(); iniciarSync();
   mostrarBotaoIOSSeNecessario();
